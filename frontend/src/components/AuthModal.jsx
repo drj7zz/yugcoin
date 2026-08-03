@@ -123,7 +123,6 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
         </div>
 
         <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textAlign: 'center', marginTop: '6px' }}>
-          * Accounts are funded with virtual demo money for testing purposes.
         </div>
       </div>
     </div>

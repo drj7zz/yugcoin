@@ -33,7 +33,6 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="badge-demo">Virtual Money</span>
             <button 
               onClick={handleCopy} 
               className="btn-secondary" 

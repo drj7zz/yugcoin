@@ -1,4 +1,5 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const DEFAULT_API_BASE = 'https://yugcoin-backend.onrender.com/api';
+const API_BASE = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? '/api' : DEFAULT_API_BASE);
 
 const getHeaders = () => {
   const token = localStorage.getItem('yugcoin_token');

@@ -32,7 +32,7 @@ export default function AnalyticsView({ history, wallets }) {
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>YUG Coin Reserve</div>
               <div style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--accent-cyan)' }}>{yugWallet.balance} YUG</div>
             </div>
-            <div className="badge-demo">ACTIVE</div>
+            <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#15803d', background: '#dcfce7', padding: '2px 8px', borderRadius: '4px' }}>ACTIVE</div>
           </div>
         </div>
 

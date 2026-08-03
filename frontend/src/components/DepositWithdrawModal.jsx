@@ -66,7 +66,6 @@ export default function DepositWithdrawModal({ onClose, onSuccess }) {
           </div>
 
           <div className="glass-panel" style={{ padding: '10px 14px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            * Adds virtual demo money to your wallet balance for testing.
           </div>
 
           <button type="submit" className="btn-primary" disabled={loading} style={{ padding: '12px', marginTop: '4px', background: '#10b981' }}>

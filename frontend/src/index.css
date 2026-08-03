@@ -330,14 +330,7 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.badge-demo {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #d97706;
-  background: #fef3c7;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
+
 
 /* Full Web Responsiveness Media Queries */
 @media (max-width: 768px) {

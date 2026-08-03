@@ -10,7 +10,6 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span>YugCoin Wallet</span>
-          <span className="badge-demo">Demo</span>
         </div>
       </div>
 
