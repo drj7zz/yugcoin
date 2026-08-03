@@ -66,7 +66,7 @@ export default function App() {
   // Socket Connection
   useEffect(() => {
     const defaultSocketUrl = window.location.hostname === 'localhost' ? '/' : 'https://yugcoin-backend.onrender.com';
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || defaultSocketUrl;
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || defaultSocketUrl;
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
 
     if (user?.walletAddress) {
