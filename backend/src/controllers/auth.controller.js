@@ -4,7 +4,6 @@ const User = require('../models/User');
 const Wallet = require('../models/Wallet');
 const walletEngine = require('../services/walletEngine.service');
 const { JWT_SECRET } = require('../middleware/auth.middleware');
-const { generateWalletUid } = require('../utils/walletUid');
 
 function validateSecurityPin(pin) {
   if (!pin || !/^[0-9]{4}$/.test(String(pin))) {
@@ -44,12 +43,9 @@ exports.register = async (req, res) => {
     
     const userId = newUser._id;
 
-    const yugUid = generateWalletUid();
-    const usdUid = generateWalletUid();
-
     await Wallet.create([
-      { uid: yugUid, userId, walletAddress, accountType: 'USER', currency: 'YUG', balance: 500 },
-      { uid: usdUid, userId, walletAddress, accountType: 'USER', currency: 'USD', balance: 100 }
+      { userId, walletAddress, accountType: 'USER', currency: 'YUG', balance: 500 },
+      { userId, walletAddress, accountType: 'USER', currency: 'USD', balance: 100 }
     ]);
 
     const token = jwt.sign({ id: userId, email: email.toLowerCase(), name, walletAddress, role: 'USER' }, JWT_SECRET, { expiresIn: '7d' });
