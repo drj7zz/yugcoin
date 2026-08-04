@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, ArrowDownRight, Copy, Check, BarChart2, ArrowUpRight, Clock, User, QrCode, ScanLine } from 'lucide-react';
+import { Send, ArrowDownRight, Copy, Check, BarChart2, ArrowUpRight, Clock, User, QrCode, ScanLine, Download } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import WalletQrScanner from './WalletQrScanner';
 
@@ -7,6 +7,29 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+
+  const downloadQr = () => {
+    const svg = document.querySelector('.qr-code-frame svg');
+    if (!svg) return;
+
+    const image = new Image();
+    const serialized = new XMLSerializer().serializeToString(svg);
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const context = canvas.getContext('2d');
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+      const link = document.createElement('a');
+      link.download = `yugcoin-wallet-${user?.walletAddress || 'qr'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    };
+    image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(serialized)}`;
+  };
 
   const activeWallet = wallets.find(w => w.currency === 'YUG') || { balance: 0, walletAddress: user?.walletAddress || 'N/A' };
 
@@ -69,6 +92,9 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
               <strong>Scan to receive assets</strong>
               <p>Share this code to receive funds directly in your wallet.</p>
               <code>{user?.walletAddress || 'N/A'}</code>
+              <button type="button" className="scan-address-button" onClick={downloadQr}>
+                <Download size={15} /> Download QR
+              </button>
             </div>
             <div className="qr-code-frame">
               <QRCodeSVG value={user?.walletAddress || 'N/A'} size={180} fgColor="#111827" bgColor="#ffffff" level="M" includeMargin />

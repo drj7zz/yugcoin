@@ -1,96 +1,193 @@
-# YugCoin
+# YugCoin Wallet
 
-YugCoin is a React, Express, and MongoDB digital-wallet application. It provides authenticated wallets, deposits, transfers, transaction history, Socket.io updates, and a double-entry ledger with an integrity audit.
+> A learning-focused digital-wallet dashboard for exploring wallet balances, transfers, transaction history, QR payments, and double-entry ledger concepts.
 
-## Live app
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Database-47A248?logo=mongodb&logoColor=white)
+![Learning project](https://img.shields.io/badge/Use-Learning%20project-blue)
 
-https://yugcoin-frontend.onrender.com
+## About YugCoin
+
+YugCoin is an educational wallet application. It helps learners understand the building blocks of a digital wallet: account access, YUG balances, simulated deposits and transfers, transaction records, QR wallet addresses, and ledger integrity checks.
+
+> **Learning project only:** YUG is not a real currency. YugCoin does not process real payments and must not be used to store or transfer real funds.
 
 ## Features
 
-- Account registration and JWT-based authentication
-- YUG and USD wallet balances
-- Transfers with idempotency protection
-- Deposits, transaction history, and live balance updates
-- Double-entry ledger records and hash-chain audit checks
-- Responsive React interface with QR wallet-address display
+- JWT-based registration and sign-in
+- Personal YUG wallet balance dashboard
+- Simulated deposits and wallet-to-wallet transfers
+- Transfer PIN confirmation and idempotency protection
+- Live transaction activity with Socket.io updates
+- QR wallet-address display, copy, and PNG download
+- Camera QR scanner for recipient wallet addresses
+- QR-image upload scanner for PNG, JPG, and WebP images
+- Transaction history and double-entry ledger records
+- Cryptographic hash-chain ledger audit endpoint
+- Responsive dashboard for desktop and mobile
 
-## Stack
+## Architecture
 
-- Frontend: React, Create React App, Socket.io client, Tailwind/PostCSS
-- Backend: Node.js, Express, Mongoose, Socket.io, JWT, bcrypt
-- Database: MongoDB
+```mermaid
+flowchart LR
+  U[Wallet user] --> F[React dashboard]
+  F -->|REST API + JWT| B[Express wallet API]
+  F <-->|Live updates| S[Socket.io]
+  B --> M[(MongoDB)]
+  B --> L[Double-entry ledger]
+  L --> A[Hash-chain audit]
+```
 
-## Project layout
+### QR payment flow
+
+```mermaid
+sequenceDiagram
+  participant Sender
+  participant Dashboard
+  participant Scanner as QR scanner / image upload
+  participant API as Wallet API
+  participant DB as MongoDB
+
+  Sender->>Scanner: Scan or upload recipient QR
+  Scanner->>Dashboard: Return wallet address
+  Dashboard->>API: Submit transfer + PIN
+  API->>DB: Save transaction and ledger entries
+  API-->>Dashboard: Transfer confirmation
+```
+
+## Technology
+
+| Layer | Technology |
+| --- | --- |
+| Frontend | React 18, Create React App, CSS, Lucide icons |
+| QR features | `qrcode.react`, camera API, native `BarcodeDetector` |
+| Backend | Node.js, Express, Socket.io |
+| Data | MongoDB with Mongoose |
+| Security | JWT, bcrypt, transfer PIN verification, idempotency keys |
+
+## Project structure
 
 ```text
 yugcoin/
-|- backend/       # Express API, models, wallet service, and tests
-|- frontend/      # React application
-|- package.json   # convenience frontend scripts
-`- README.md
+├── backend/
+│   ├── src/
+│   │   ├── admin/                 # Administrative routes
+│   │   ├── config/                # Database configuration
+│   │   ├── controllers/           # Auth and wallet controllers
+│   │   ├── middleware/            # JWT middleware
+│   │   ├── models/                # User, wallet, transaction, ledger models
+│   │   ├── routes/                # API routes
+│   │   ├── services/              # Wallet and double-entry ledger engine
+│   │   ├── seed.js
+│   │   └── server.js
+│   └── test/
+├── frontend/
+│   ├── public/
+│   └── src/
+│       ├── assets/
+│       ├── components/
+│       │   ├── AuthModal.jsx
+│       │   ├── Dashboard.jsx
+│       │   ├── DepositWithdrawModal.jsx
+│       │   ├── InsightsView.jsx
+│       │   ├── Navbar.jsx
+│       │   ├── TransferModal.jsx
+│       │   └── WalletQrScanner.jsx # Camera and uploaded-image scanner
+│       ├── services/api.js
+│       ├── App.jsx
+│       └── index.css
+├── .gitignore
+├── package.json
+└── README.md
 ```
 
 ## Run locally
 
-Prerequisites: Node.js 18+, npm, and a MongoDB database.
+### Prerequisites
 
-1. Create `backend/.env`:
+- Node.js 18 or newer
+- npm
+- A MongoDB database (local MongoDB or MongoDB Atlas)
 
-   ```env
-   MONGO_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
-   JWT_SECRET=replace-with-a-strong-secret
-   PORT=5000
-   ```
+### 1. Configure the backend
 
-2. Start the API:
+Create `backend/.env`:
 
-   ```bash
-   cd backend
-   npm install
-   npm start
-   ```
+```env
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
+JWT_SECRET=replace-with-a-long-random-secret
+PORT=5000
+```
 
-3. In another terminal, start the frontend:
+Install and run the API:
 
-   ```bash
-   cd frontend
-   npm install
-   REACT_APP_API_URL=http://localhost:5000/api npm start
-   ```
+```bash
+cd backend
+npm install
+npm start
+```
 
-On Windows PowerShell, set the API URL with:
+### 2. Run the frontend
+
+In a separate terminal:
+
+```bash
+cd frontend
+npm install
+```
+
+Set the local API URL in PowerShell, then start React:
 
 ```powershell
 $env:REACT_APP_API_URL = 'http://localhost:5000/api'
 npm start
 ```
 
-If `REACT_APP_API_URL` is not set, the frontend uses the deployed YugCoin API.
+The dashboard opens at `http://localhost:3000`.
 
-## Build and verify
+## QR scanner notes
+
+The QR scanner uses the browser's native `BarcodeDetector` API and requires camera permission for live scanning. If camera scanning is unavailable or permission is declined, manual wallet-address entry remains available. Uploaded QR images are read locally in the browser.
+
+## API overview
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/auth/register` | Create a learning wallet account |
+| `POST` | `/api/auth/login` | Sign in and receive a JWT |
+| `GET` | `/api/auth/me` | Get the current user and wallets |
+| `GET` | `/api/wallet/balances` | Get wallet balances |
+| `POST` | `/api/wallet/deposit` | Simulate a YUG deposit |
+| `POST` | `/api/wallet/transfer` | Send simulated YUG to another wallet |
+| `GET` | `/api/wallet/history` | Get wallet transaction history |
+| `GET` | `/api/wallet/audit` | Verify ledger hash-chain integrity |
+| `GET` | `/api/health` | Check API status |
+
+## Build and verification
 
 Build the frontend production bundle:
 
 ```bash
+cd frontend
 npm run build
 ```
 
-Run the backend tests:
+Run backend tests:
 
 ```bash
 cd backend
 npm test
 ```
 
-The current backend test file still targets a retired in-memory wallet-engine API. It should be updated to run against an isolated MongoDB test database before it can serve as a reliable CI check for the production MongoDB implementation.
+> The current backend test suite still targets a retired in-memory wallet-engine API. Update it to use an isolated MongoDB test database before relying on it in CI.
 
-## Contributing
+## Live app
 
-Keep changes focused, do not commit `.env` files or `node_modules`, and run the relevant build or tests before opening a pull request.
+https://yugcoin-frontend.onrender.com
 
-## Contacts
+## Team
 
-- https://github.com/drj7zz
-- https://github.com/coder-khushi
-- giridirghraj@gmail.com
+- GitHub: [drj7zz](https://github.com/drj7zz)
+- GitHub: [coder-khushi](https://github.com/coder-khushi)
+- Contact: giridirghraj@gmail.com
