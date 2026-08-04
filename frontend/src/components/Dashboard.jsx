@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Send, ArrowDownRight, Copy, Check, BarChart2, ArrowUpRight, Clock, User, QrCode, ScanLine, Download } from 'lucide-react';
+import { Send, ArrowDownRight, Copy, Check, BarChart2, ArrowUpRight, Clock, User, QrCode, ScanLine, Download, ReceiptText, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import WalletQrScanner from './WalletQrScanner';
+import TransactionStatementModal from './TransactionStatementModal';
 
 export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDeposit, onNavigateInsights, onScanRecipient }) {
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [statementTransaction, setStatementTransaction] = useState(null);
 
   const downloadQr = () => {
     const svg = document.querySelector('.qr-code-frame svg');
@@ -24,8 +26,8 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
       const link = document.createElement('a');
-      link.download = `yugcoin-wallet-${user?.walletAddress || 'qr'}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.download = `yugcoin-wallet-${user?.walletAddress || 'qr'}.jpeg`;
+      link.href = canvas.toDataURL('image/jpeg', 0.95);
       link.click();
     };
     image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(serialized)}`;
@@ -88,12 +90,15 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
         {showQR && (
           <div className="qr-receive-card animate-slide-in">
             <div className="qr-receive-copy">
-              <span className="qr-receive-label">Receive YUG</span>
+              <div className="flex justify-between items-center w-full">
+                <span className="qr-receive-label">Receive YUG</span>
+                <button type="button" className="scanner-close" onClick={() => setShowQR(false)} aria-label="Close QR code"><X size={16} /></button>
+              </div>
               <strong>Scan to receive assets</strong>
               <p>Share this code to receive funds directly in your wallet.</p>
               <code>{user?.walletAddress || 'N/A'}</code>
               <button type="button" className="scan-address-button" onClick={downloadQr}>
-                <Download size={15} /> Download QR
+                <Download size={15} /> Download JPEG
               </button>
             </div>
             <div className="qr-code-frame">
@@ -209,6 +214,7 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
                         Fee: {tx.fee} YUG
                       </div>
                     )}
+                    <button type="button" className="statement-link" onClick={() => setStatementTransaction(tx)}><ReceiptText size={14} /> Statement</button>
                   </div>
                 </div>
               );
@@ -216,6 +222,8 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
           </div>
         )}
       </div>
+
+      {statementTransaction && <TransactionStatementModal transaction={statementTransaction} walletAddress={user?.walletAddress} onClose={() => setStatementTransaction(null)} />}
 
     </div>
   );

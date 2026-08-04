@@ -20,9 +20,10 @@ YugCoin is an educational wallet application. It helps learners understand the b
 - Simulated deposits and wallet-to-wallet transfers
 - Transfer PIN confirmation and idempotency protection
 - Live transaction activity with Socket.io updates
-- QR wallet-address display, copy, and PNG download
+- QR wallet-address display, copy, and JPEG download
 - Camera QR scanner for recipient wallet addresses
 - QR-image upload scanner for PNG, JPG, and WebP images
+- Closable transaction statements with JPEG export
 - Transaction history and double-entry ledger records
 - Cryptographic hash-chain ledger audit endpoint
 - Responsive dashboard for desktop and mobile
