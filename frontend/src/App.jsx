@@ -138,6 +138,19 @@ export default function App() {
               </button>
             </div>
 
+            <section className="project-journey mt-8">
+              <div className="flex items-center justify-between gap-4" style={{ flexWrap: 'wrap' }}>
+                <div><span className="qr-receive-label">YugCoin journey</span><h2 className="font-bold" style={{ fontSize: '1.45rem', marginTop: '0.35rem' }}>A wallet built for learning, growing, and sharing.</h2></div>
+                <span className="journey-badge">Open source roadmap</span>
+              </div>
+              <div className="journey-grid">
+                <div><strong>v1.0</strong><p>Secure wallet accounts, YUG balances, transfers, and a transparent double-entry ledger.</p></div>
+                <div><strong>v1.1</strong><p>QR receive and scan tools, payment receipts, and downloadable statements.</p></div>
+                <div><strong>Upcoming</strong><p>Private usernames, account security, rewards, coupons, and a YUG marketplace.</p></div>
+              </div>
+              <p className="journey-note">Sign in to explore the complete project documentation and roadmap.</p>
+            </section>
+
             <div className="landing-info-grid mt-8">
               <section className="feature-card landing-info-card">
                 <div className="feature-icon-wrapper" style={{ background: 'rgba(56, 189, 248, 0.2)', color: 'var(--primary)' }}>
@@ -173,19 +186,6 @@ export default function App() {
                 </div>
               </section>
             </div>
-
-            <section className="project-journey mt-8">
-              <div className="flex items-center justify-between gap-4" style={{ flexWrap: 'wrap' }}>
-                <div><span className="qr-receive-label">YugCoin journey</span><h2 className="font-bold" style={{ fontSize: '1.45rem', marginTop: '0.35rem' }}>A wallet built for learning, growing, and sharing.</h2></div>
-                <span className="journey-badge">Open source roadmap</span>
-              </div>
-              <div className="journey-grid">
-                <div><strong>Beginning</strong><p>Started with secure wallet accounts, YUG balances, transfers, and a transparent ledger.</p></div>
-                <div><strong>Current</strong><p>Now includes QR receive and scan tools, payment receipts, and downloadable statements.</p></div>
-                <div><strong>Future</strong><p>Next are private usernames, account security, rewards, coupons, and a YUG marketplace.</p></div>
-              </div>
-              <p className="journey-note">Sign in to open the full phase-by-phase project roadmap.</p>
-            </section>
 
             {/* Project contact */}
             <div className="flex flex-col items-center mt-8 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
