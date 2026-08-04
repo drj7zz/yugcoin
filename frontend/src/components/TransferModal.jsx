@@ -66,30 +66,38 @@ export default function TransferModal({ wallets, onClose, onSuccess }) {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div className="brand-icon" style={{ background: '#3b82f6', width: '32px', height: '32px' }}>
-              <Send size={16} />
+        <div className="flex justify-between items-center" style={{ marginBottom: '1rem' }}>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center" style={{ background: 'var(--primary)', width: '36px', height: '36px', borderRadius: '50%', color: '#fff' }}>
+              <Send size={18} />
             </div>
-            <h3>Send YUG Coin</h3>
+            <h3 className="font-extrabold" style={{ fontSize: '1.25rem', color: 'var(--text-main)' }}>Send YUG Coin</h3>
           </div>
-          <button className="close-btn" onClick={onClose}><X size={18} /></button>
+          <button
+            className="flex items-center justify-center"
+            onClick={onClose}
+            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', padding: '0.5rem', borderRadius: '50%', color: 'var(--text-muted)', cursor: 'pointer', transition: 'background 0.2s' }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+          >
+            <X size={18} />
+          </button>
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(244, 63, 94, 0.12)', border: '1px solid rgba(244, 63, 94, 0.3)', color: 'var(--accent-rose)', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertCircle size={16} /> {error}
+          <div className="flex items-center gap-2 animate-slide-in" style={{ background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.3)', color: '#f43f5e', padding: '0.75rem 1rem', borderRadius: '0.75rem', fontSize: '0.9rem', fontWeight: 500 }}>
+            <AlertCircle size={18} /> {error}
           </div>
         )}
 
-        <form onSubmit={handleTransfer} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          
-          {/* Recipient Address */}
-          <div className="form-group">
-            <label>Recipient Wallet Address</label>
+        <form onSubmit={handleTransfer} className="flex flex-col gap-4">
+
+          <div className="flex flex-col gap-2">
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Recipient Wallet Address</label>
             <input
               type="text"
-              className="form-input mono"
+              className="liquid-input"
+              style={{ fontFamily: 'monospace' }}
               placeholder="e.g. YUG-8F3A29B"
               value={destinationAddress}
               onChange={(e) => setDestinationAddress(e.target.value.trim())}
@@ -97,18 +105,18 @@ export default function TransferModal({ wallets, onClose, onSuccess }) {
             />
           </div>
 
-          {/* Amount */}
-          <div className="form-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <label>Amount (YUG Coin)</label>
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between">
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Amount (YUG Coin)</label>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Available: <strong style={{ color: 'var(--accent-cyan)' }}>{currentWallet.balance} YUG</strong>
+                Available: <strong style={{ color: 'var(--primary)' }}>{currentWallet.balance} YUG</strong>
               </span>
             </div>
             <input
               type="number"
               step="any"
-              className="form-input"
+              className="liquid-input"
+              style={{ fontSize: '1.2rem', fontWeight: 600 }}
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -116,45 +124,43 @@ export default function TransferModal({ wallets, onClose, onSuccess }) {
             />
           </div>
 
-          {/* Note / Description */}
-          <div className="form-group">
-            <label>Note / Reference (Optional)</label>
+          <div className="flex flex-col gap-2">
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Note / Reference (Optional)</label>
             <input
               type="text"
-              className="form-input"
+              className="liquid-input"
               placeholder="Payment reference"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
-          {/* Breakdown */}
           {numAmount > 0 && (
-            <div className="glass-panel" style={{ padding: '12px', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+            <div className="flex flex-col gap-2" style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '0.75rem', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.85rem' }}>
+              <div className="flex justify-between" style={{ color: 'var(--text-muted)' }}>
                 <span>Transfer Amount:</span>
-                <span>{numAmount} YUG</span>
+                <span className="font-bold text-current">{numAmount} YUG</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+              <div className="flex justify-between" style={{ color: 'var(--text-muted)' }}>
                 <span>Processing Fee (0.1%):</span>
-                <span>{calculatedFee} YUG</span>
+                <span className="font-bold text-current">{calculatedFee} YUG</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', paddingTop: '4px', borderTop: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
+              <div className="flex justify-between" style={{ fontWeight: 700, paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-main)', marginTop: '0.25rem' }}>
                 <span>Total Debit:</span>
-                <span style={{ color: 'var(--accent-rose)' }}>-{totalDeduction} YUG</span>
+                <span style={{ color: '#f43f5e' }}>-{totalDeduction} YUG</span>
               </div>
             </div>
           )}
 
-          {/* Security PIN */}
-          <div className="form-group">
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <ShieldCheck size={14} color="var(--accent-amber)" /> Enter 4-Digit Security PIN
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+              <ShieldCheck size={16} color="var(--primary)" /> Enter 4-Digit Security PIN
             </label>
             <input
               type="password"
               maxLength={4}
-              className="form-input mono"
+              className="liquid-input"
+              style={{ fontFamily: 'monospace', letterSpacing: '0.2em' }}
               placeholder="1234"
               value={securityPin}
               onChange={(e) => setSecurityPin(e.target.value)}
@@ -162,7 +168,7 @@ export default function TransferModal({ wallets, onClose, onSuccess }) {
             />
           </div>
 
-          <button type="submit" className="btn-primary" disabled={loading} style={{ padding: '12px', marginTop: '4px', fontSize: '0.95rem' }}>
+          <button type="submit" className="liquid-btn-primary" disabled={loading} style={{ padding: '1rem', marginTop: '0.5rem', fontSize: '1.05rem', opacity: loading ? 0.7 : 1 }}>
             {loading ? 'Executing Transfer...' : 'Confirm Transfer'}
           </button>
         </form>

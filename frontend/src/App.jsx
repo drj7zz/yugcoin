@@ -7,14 +7,14 @@ import AuthModal from './components/AuthModal';
 import TransferModal from './components/TransferModal';
 import DepositWithdrawModal from './components/DepositWithdrawModal';
 import { api } from './services/api';
-import { Bell } from 'lucide-react';
+import { Bell, Info, FolderKanban, Users, Github } from 'lucide-react';
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [wallets, setWallets] = useState([]);
   const [history, setHistory] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
-  
+
   // Modals
   const [authModal, setAuthModal] = useState({ open: false, mode: 'login' });
   const [showSendModal, setShowSendModal] = useState(false);
@@ -65,8 +65,7 @@ export default function App() {
 
   // Socket Connection
   useEffect(() => {
-    const defaultSocketUrl = window.location.hostname === 'localhost' ? '/' : 'https://yugcoin-backend.onrender.com';
-    const socketUrl = process.env.REACT_APP_SOCKET_URL || defaultSocketUrl;
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'https://yugcoin-backend.onrender.com';
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
 
     if (user?.walletAddress) {
@@ -90,13 +89,13 @@ export default function App() {
   };
 
   return (
-    <div className="app-container">
-      
+    <div className="max-w-container">
+
       {/* Toast Notifications */}
       <div className="toast-container">
         {toasts.map(t => (
-          <div key={t.id} className="toast">
-            <Bell size={15} color="#38bdf8" />
+          <div key={t.id} className="toast glass-card">
+            <Bell size={18} color="var(--primary)" />
             <span>{t.msg}</span>
           </div>
         ))}
@@ -114,28 +113,73 @@ export default function App() {
 
       {/* Main Content Area */}
       {!user ? (
-        <div className="glass-card" style={{ padding: '40px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', marginTop: '10px' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1.2, color: 'var(--text-main)' }}>
-            Digital Wallet & Ledger
-          </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', maxWidth: '500px', lineHeight: 1.5 }}>
-            A minimal, authentic digital wallet. Features real-time balance tracking, instant transfers, and balance audits.
-          </p>
+        <div className="flex flex-col items-center justify-center mt-8">
+          <div className="glass-card landing-hero-content animate-slide-in w-full">
 
-          <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
-            <button className="btn-primary" onClick={() => setAuthModal({ open: true, mode: 'register' })} style={{ padding: '10px 20px' }}>
-              Create Account
-            </button>
-            <button className="btn-secondary" onClick={() => setAuthModal({ open: true, mode: 'login' })} style={{ padding: '10px 20px' }}>
-              Sign In
-            </button>
-          </div>
+            <div className="flex flex-col items-center gap-4">
+              <h1 className="hero-title" style={{ fontSize: '3.5rem', lineHeight: 1.1 }}>
+                The Future of Digital Assets
+              </h1>
+              <p style={{ fontSize: '1.25rem', opacity: 0.85, maxWidth: '640px', margin: '0 auto', lineHeight: 1.6 }}>
+                YugCoin makes moving money more transparent, secure, and easier to understand.
+              </p>
+            </div>
 
-          <div style={{ marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+            <div className="flex justify-center gap-4 mt-8">
+              <button className="liquid-btn-primary" style={{ fontSize: '1.1rem' }} onClick={() => setAuthModal({ open: true, mode: 'register' })}>
+                Get Started Now
+              </button>
+              <button className="liquid-btn-secondary" style={{ fontSize: '1.1rem' }} onClick={() => setAuthModal({ open: true, mode: 'login' })}>
+                Access Wallet
+              </button>
+            </div>
+
+            <div className="landing-info-grid mt-8">
+              <section className="feature-card landing-info-card">
+                <div className="feature-icon-wrapper" style={{ background: 'rgba(56, 189, 248, 0.2)', color: 'var(--primary)' }}>
+                  <Info size={32} />
+                </div>
+                <h2 className="font-bold" style={{ fontSize: '1.25rem' }}>About YugCoin</h2>
+                <p>YugCoin is a digital wallet platform created for visitors, learners, and contributors who want a clear, practical way to explore digital money movement.</p>
+              </section>
+
+              <section className="feature-card landing-info-card">
+                <div className="feature-icon-wrapper" style={{ background: 'rgba(148, 163, 184, 0.18)', color: 'var(--text-main)' }}>
+                  <FolderKanban size={32} />
+                </div>
+                <h2 className="font-bold" style={{ fontSize: '1.25rem' }}>The Project</h2>
+                <p>Create a wallet, follow your balance, make transfers, add or withdraw funds, and see your activity in one approachable experience.</p>
+              </section>
+
+              <section className="feature-card landing-info-card">
+                <div className="feature-icon-wrapper" style={{ background: 'rgba(34, 197, 94, 0.16)', color: '#86efac' }}>
+                  <Users size={32} />
+                </div>
+                <h2 className="font-bold" style={{ fontSize: '1.25rem' }}>Developers</h2>
+                <p>Built by people who value learning, clarity, and meaningful collaboration.</p>
+                <div className="developer-links">
+                  <a href="https://github.com/drj7zz" target="_blank" rel="noreferrer" aria-label="View drj7zz on GitHub">
+                    <Github size={16} />
+                    <span><small>GitHub</small>drj7zz</span>
+                  </a>
+                  <a href="https://github.com/coder-khushi" target="_blank" rel="noreferrer" aria-label="View coder-khushi on GitHub">
+                    <Github size={16} />
+                    <span><small>GitHub</small>coder-khushi</span>
+                  </a>
+                </div>
+              </section>
+            </div>
+
+            {/* Project contact */}
+            <div className="flex flex-col items-center mt-8 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <p style={{ fontSize: '0.9rem', opacity: 0.6, fontWeight: 500 }}>Questions, collaboration, or project inquiries?</p>
+              <a href="mailto:giridirghraj@gmail.com" style={{ color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 600, marginTop: '4px', textDecoration: 'underline' }}>giridirghraj@gmail.com</a>
+            </div>
+
           </div>
         </div>
       ) : (
-        <>
+        <div className="w-full" style={{ flex: 1 }}>
           {activeTab === 'dashboard' && (
             <Dashboard
               user={user}
@@ -148,7 +192,7 @@ export default function App() {
           )}
 
           {activeTab === 'insights' && <InsightsView history={history} wallets={wallets} />}
-        </>
+        </div>
       )}
 
       {/* Modals */}
