@@ -152,6 +152,22 @@ The dashboard opens at `http://localhost:3000`.
 
 The QR scanner uses the browser's native `BarcodeDetector` API and requires camera permission for live scanning. If camera scanning is unavailable or permission is declined, manual wallet-address entry remains available. Uploaded QR images are read locally in the browser.
 
+## Product roadmap
+
+- Add optional usernames so users can receive payments without sharing wallet IDs.
+- Improve the database structure for users, wallets, transactions, rewards, coupons, and marketplace orders.
+- Fix transaction statements with complete payment details, statuses, and download options.
+- Create an Account page for profile settings, password changes, PIN changes, and security controls.
+- Add KYC-style verification to improve account security and trust.
+- Improve the dashboard with better visuals, images, charts, and wallet insights.
+- Build a controlled balance-flow system with fixed or limited demo YUG amounts.
+- Add payment requests through QR codes and usernames.
+- Create a Coupons and Rewards page where users can earn and redeem YUG rewards.
+- Build a YugCoin marketplace where users can spend YUG on demo or digital products.
+- Add an internal YUG economy through transfers, rewards, coupons, and marketplace payments.
+- Make YugCoin open source with professional documentation, contribution rules, and a public roadmap.
+- Launch YugCoin as a web app first and later develop it as a mobile application.
+
 ## API overview
 
 | Method | Endpoint | Purpose |

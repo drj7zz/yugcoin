@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, BarChart2, LogOut, LogIn, UserPlus, RefreshCw, User } from 'lucide-react';
+import { Wallet, BarChart2, LogOut, LogIn, UserPlus, RefreshCw, User, Code2 } from 'lucide-react';
 import backgroundImage from '../assets/bg.jpeg';
 
 export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLogout, onRefresh }) {
@@ -46,6 +46,18 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
                 <div className="flex items-center gap-2">
                   <BarChart2 size={16} /> <span style={{ fontSize: '0.9rem' }}>Insights</span>
                 </div>
+              </button>
+              <button
+                className="liquid-btn-secondary"
+                style={{
+                  padding: '0.5rem 1rem',
+                  border: 'none',
+                  background: activeTab === 'open-source' ? 'rgba(255,255,255,0.2)' : 'transparent',
+                  color: activeTab === 'open-source' ? 'var(--text-main)' : 'var(--text-muted)'
+                }}
+                onClick={() => setActiveTab('open-source')}
+              >
+                <div className="flex items-center gap-2"><Code2 size={16} /> <span style={{ fontSize: '0.9rem' }}>Open Source</span></div>
               </button>
             </div>
 

@@ -7,6 +7,7 @@ import AuthModal from './components/AuthModal';
 import TransferModal from './components/TransferModal';
 import DepositWithdrawModal from './components/DepositWithdrawModal';
 import TransactionStatementModal from './components/TransactionStatementModal';
+import OpenSourceView from './components/OpenSourceView';
 import { api } from './services/api';
 import { Bell, Info, FolderKanban, Users, Github } from 'lucide-react';
 
@@ -173,6 +174,19 @@ export default function App() {
               </section>
             </div>
 
+            <section className="project-journey mt-8">
+              <div className="flex items-center justify-between gap-4" style={{ flexWrap: 'wrap' }}>
+                <div><span className="qr-receive-label">YugCoin journey</span><h2 className="font-bold" style={{ fontSize: '1.45rem', marginTop: '0.35rem' }}>A wallet built for learning, growing, and sharing.</h2></div>
+                <span className="journey-badge">Open source roadmap</span>
+              </div>
+              <div className="journey-grid">
+                <div><strong>Beginning</strong><p>Started with secure wallet accounts, YUG balances, transfers, and a transparent ledger.</p></div>
+                <div><strong>Current</strong><p>Now includes QR receive and scan tools, payment receipts, and downloadable statements.</p></div>
+                <div><strong>Future</strong><p>Next are private usernames, account security, rewards, coupons, and a YUG marketplace.</p></div>
+              </div>
+              <p className="journey-note">Sign in to open the full phase-by-phase project roadmap.</p>
+            </section>
+
             {/* Project contact */}
             <div className="flex flex-col items-center mt-8 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
               <p style={{ fontSize: '0.9rem', opacity: 0.6, fontWeight: 500 }}>Questions, collaboration, or project inquiries?</p>
@@ -206,6 +220,7 @@ export default function App() {
           )}
 
           {activeTab === 'insights' && <InsightsView history={history} wallets={wallets} />}
+          {activeTab === 'open-source' && <OpenSourceView />}
         </div>
       )}
 
