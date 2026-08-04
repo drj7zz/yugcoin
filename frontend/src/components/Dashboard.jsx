@@ -181,13 +181,23 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
                 <div
                   key={tx.transactionId || idx}
                   className="flex items-center justify-between animate-slide-in"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open statement for ${displayType} transaction`}
                   style={{
                     padding: '1rem',
                     background: 'rgba(255,255,255,0.05)',
                     border: '1px solid rgba(255,255,255,0.1)',
                     borderRadius: '1rem',
                     transition: 'transform 0.2s',
-                    cursor: 'default'
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setStatementTransaction(tx)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setStatementTransaction(tx);
+                    }
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateX(4px)'; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateX(0)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
@@ -220,7 +230,7 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
                         Fee: {tx.fee} YUG
                       </div>
                     )}
-                    <button type="button" className="statement-link" onClick={() => setStatementTransaction(tx)}><ReceiptText size={14} /> Statement</button>
+                    <button type="button" className="statement-link" onClick={(event) => { event.stopPropagation(); setStatementTransaction(tx); }}><ReceiptText size={14} /> Statement</button>
                   </div>
                 </div>
               );
