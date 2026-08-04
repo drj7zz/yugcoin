@@ -6,6 +6,7 @@ import InsightsView from './components/InsightsView';
 import AuthModal from './components/AuthModal';
 import TransferModal from './components/TransferModal';
 import DepositWithdrawModal from './components/DepositWithdrawModal';
+import TransactionStatementModal from './components/TransactionStatementModal';
 import { api } from './services/api';
 import { Bell, Info, FolderKanban, Users, Github } from 'lucide-react';
 
@@ -18,7 +19,8 @@ export default function App() {
   // Modals
   const [authModal, setAuthModal] = useState({ open: false, mode: 'login' });
   const [showSendModal, setShowSendModal] = useState(false);
-  const [scannedRecipient, setScannedRecipient] = useState('');
+  const [transferDraft, setTransferDraft] = useState({ destinationAddress: '', amount: '', description: '' });
+  const [completedTransaction, setCompletedTransaction] = useState(null);
   const [showDepositModal, setShowDepositModal] = useState(false);
 
   // Toast notification
@@ -186,11 +188,18 @@ export default function App() {
               user={user}
               wallets={wallets}
               history={history}
-              onOpenSend={() => setShowSendModal(true)}
+              onOpenSend={() => {
+                setTransferDraft({ destinationAddress: '', amount: '', description: '' });
+                setShowSendModal(true);
+              }}
               onOpenDeposit={() => setShowDepositModal(true)}
               onNavigateInsights={() => setActiveTab('insights')}
               onScanRecipient={(address) => {
-                setScannedRecipient(address);
+                setTransferDraft({ destinationAddress: address, amount: '', description: '' });
+                setShowSendModal(true);
+              }}
+              onRedoPayment={(draft) => {
+                setTransferDraft(draft);
                 setShowSendModal(true);
               }}
             />
@@ -216,13 +225,16 @@ export default function App() {
       {showSendModal && (
           <TransferModal
             wallets={wallets}
-            initialDestinationAddress={scannedRecipient}
+            initialDestinationAddress={transferDraft.destinationAddress}
+            initialAmount={transferDraft.amount}
+            initialDescription={transferDraft.description}
             onClose={() => {
               setShowSendModal(false);
-              setScannedRecipient('');
+              setTransferDraft({ destinationAddress: '', amount: '', description: '' });
             }}
-          onSuccess={(msg) => {
+          onSuccess={(msg, transaction) => {
             addToast(msg, 'success');
+            setCompletedTransaction(transaction);
             loadUserData();
           }}
         />
@@ -234,6 +246,19 @@ export default function App() {
           onSuccess={(msg) => {
             addToast(msg, 'success');
             loadUserData();
+          }}
+        />
+      )}
+
+      {completedTransaction && (
+        <TransactionStatementModal
+          transaction={completedTransaction}
+          walletAddress={user?.walletAddress}
+          onClose={() => setCompletedTransaction(null)}
+          onRedo={(draft) => {
+            setCompletedTransaction(null);
+            setTransferDraft(draft);
+            setShowSendModal(true);
           }}
         />
       )}

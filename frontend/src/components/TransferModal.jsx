@@ -3,11 +3,11 @@ import { X, Send, ShieldCheck, AlertCircle, ScanLine } from 'lucide-react';
 import { api } from '../services/api';
 import WalletQrScanner from './WalletQrScanner';
 
-export default function TransferModal({ wallets, onClose, onSuccess, initialDestinationAddress = '' }) {
+export default function TransferModal({ wallets, onClose, onSuccess, initialDestinationAddress = '', initialAmount = '', initialDescription = '' }) {
   const [destinationAddress, setDestinationAddress] = useState(initialDestinationAddress);
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState(initialAmount);
   const [securityPin, setSecurityPin] = useState('');
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState(initialDescription);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showScanner, setShowScanner] = useState(false);
@@ -29,6 +29,10 @@ export default function TransferModal({ wallets, onClose, onSuccess, initialDest
     }
     if (!amount || numAmount <= 0) {
       setError('Please enter a valid transfer amount');
+      return;
+    }
+    if (!description.trim()) {
+      setError('A payment note or reference is required');
       return;
     }
     if (totalDeduction > currentWallet.balance) {
@@ -53,7 +57,7 @@ export default function TransferModal({ wallets, onClose, onSuccess, initialDest
       });
 
       if (res.success) {
-        onSuccess('Transfer executed successfully');
+        onSuccess('Transfer executed successfully', res.transaction);
         onClose();
       } else {
         setError(res.error || 'Transfer failed');
@@ -142,13 +146,14 @@ export default function TransferModal({ wallets, onClose, onSuccess, initialDest
           </div>
 
           <div className="flex flex-col gap-2">
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Note / Reference (Optional)</label>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Note / Reference</label>
             <input
               type="text"
               className="liquid-input"
               placeholder="Payment reference"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              required
             />
           </div>
 

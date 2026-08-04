@@ -4,7 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import WalletQrScanner from './WalletQrScanner';
 import TransactionStatementModal from './TransactionStatementModal';
 
-export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDeposit, onNavigateInsights, onScanRecipient }) {
+export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDeposit, onNavigateInsights, onScanRecipient, onRedoPayment }) {
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
@@ -62,14 +62,20 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setShowQR(!showQR)}
+              onClick={() => {
+                setShowQR((visible) => !visible);
+                setShowScanner(false);
+              }}
               className="liquid-btn-secondary flex items-center justify-center gap-2"
               style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
             >
               <QrCode size={16} /> Show QR
             </button>
             <button
-              onClick={() => setShowScanner(!showScanner)}
+              onClick={() => {
+                setShowScanner((visible) => !visible);
+                setShowQR(false);
+              }}
               className="liquid-btn-secondary flex items-center justify-center gap-2"
               style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
             >
@@ -223,7 +229,7 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
         )}
       </div>
 
-      {statementTransaction && <TransactionStatementModal transaction={statementTransaction} walletAddress={user?.walletAddress} onClose={() => setStatementTransaction(null)} />}
+      {statementTransaction && <TransactionStatementModal transaction={statementTransaction} walletAddress={user?.walletAddress} onClose={() => setStatementTransaction(null)} onRedo={(draft) => { setStatementTransaction(null); onRedoPayment(draft); }} />}
 
     </div>
   );

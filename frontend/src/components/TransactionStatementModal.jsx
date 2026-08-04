@@ -1,10 +1,10 @@
 import React from 'react';
-import { CheckCircle2, Download, ReceiptText, X } from 'lucide-react';
+import { CheckCircle2, Download, ReceiptText, RotateCcw, X } from 'lucide-react';
 
 const amount = (value) => Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const dateTime = (value) => new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
-export default function TransactionStatementModal({ transaction, walletAddress, onClose }) {
+export default function TransactionStatementModal({ transaction, walletAddress, onClose, onRedo }) {
   const isDeposit = transaction.type === 'DEPOSIT';
   const isSender = transaction.sourceAddress === walletAddress;
   const outgoing = isSender && !isDeposit;
@@ -68,6 +68,7 @@ export default function TransactionStatementModal({ transaction, walletAddress, 
           <div><dt>Reference</dt><dd>{transaction.description || '—'}</dd></div>
         </dl>
         <button type="button" className="liquid-btn-primary flex items-center justify-center gap-2" onClick={downloadStatement} style={{ padding: '0.9rem' }}><Download size={18} /> Download as JPEG</button>
+        {transaction.type === 'TRANSFER' && onRedo && <button type="button" className="liquid-btn-secondary flex items-center justify-center gap-2" onClick={() => onRedo({ destinationAddress: counterparty, amount: String(transaction.amount), description: transaction.description || '' })} style={{ padding: '0.8rem' }}><RotateCcw size={17} /> Redo payment</button>}
       </div>
     </div>
   );
