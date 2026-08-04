@@ -18,6 +18,7 @@ export default function App() {
   // Modals
   const [authModal, setAuthModal] = useState({ open: false, mode: 'login' });
   const [showSendModal, setShowSendModal] = useState(false);
+  const [scannedRecipient, setScannedRecipient] = useState('');
   const [showDepositModal, setShowDepositModal] = useState(false);
 
   // Toast notification
@@ -188,6 +189,10 @@ export default function App() {
               onOpenSend={() => setShowSendModal(true)}
               onOpenDeposit={() => setShowDepositModal(true)}
               onNavigateInsights={() => setActiveTab('insights')}
+              onScanRecipient={(address) => {
+                setScannedRecipient(address);
+                setShowSendModal(true);
+              }}
             />
           )}
 
@@ -209,9 +214,13 @@ export default function App() {
       )}
 
       {showSendModal && (
-        <TransferModal
-          wallets={wallets}
-          onClose={() => setShowSendModal(false)}
+          <TransferModal
+            wallets={wallets}
+            initialDestinationAddress={scannedRecipient}
+            onClose={() => {
+              setShowSendModal(false);
+              setScannedRecipient('');
+            }}
           onSuccess={(msg) => {
             addToast(msg, 'success');
             loadUserData();

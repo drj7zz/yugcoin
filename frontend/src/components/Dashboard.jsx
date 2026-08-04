@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Send, ArrowDownRight, Copy, Check, BarChart2, ArrowUpRight, Clock, User, QrCode } from 'lucide-react';
+import { Send, ArrowDownRight, Copy, Check, BarChart2, ArrowUpRight, Clock, User, QrCode, ScanLine } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import WalletQrScanner from './WalletQrScanner';
 
-export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDeposit, onNavigateInsights }) {
+export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDeposit, onNavigateInsights, onScanRecipient }) {
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
 
   const activeWallet = wallets.find(w => w.currency === 'YUG') || { balance: 0, walletAddress: user?.walletAddress || 'N/A' };
 
@@ -42,6 +44,13 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
               <QrCode size={16} /> Show QR
             </button>
             <button
+              onClick={() => setShowScanner(!showScanner)}
+              className="liquid-btn-secondary flex items-center justify-center gap-2"
+              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+            >
+              <ScanLine size={16} /> Scan QR
+            </button>
+            <button
               onClick={handleCopy}
               className="liquid-btn-primary flex items-center justify-center gap-2"
               style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: copied ? '#10b981' : undefined }}
@@ -64,6 +73,18 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
             <div className="qr-code-frame">
               <QRCodeSVG value={user?.walletAddress || 'N/A'} size={180} fgColor="#111827" bgColor="#ffffff" level="M" includeMargin />
             </div>
+          </div>
+        )}
+
+        {showScanner && (
+          <div style={{ marginBottom: '2rem' }}>
+            <WalletQrScanner
+              onClose={() => setShowScanner(false)}
+              onScan={(address) => {
+                setShowScanner(false);
+                onScanRecipient(address);
+              }}
+            />
           </div>
         )}
 

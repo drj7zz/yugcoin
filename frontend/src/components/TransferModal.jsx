@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { X, Send, ShieldCheck, AlertCircle } from 'lucide-react';
+import { X, Send, ShieldCheck, AlertCircle, ScanLine } from 'lucide-react';
 import { api } from '../services/api';
+import WalletQrScanner from './WalletQrScanner';
 
-export default function TransferModal({ wallets, onClose, onSuccess }) {
-  const [destinationAddress, setDestinationAddress] = useState('');
+export default function TransferModal({ wallets, onClose, onSuccess, initialDestinationAddress = '' }) {
+  const [destinationAddress, setDestinationAddress] = useState(initialDestinationAddress);
   const [amount, setAmount] = useState('');
   const [securityPin, setSecurityPin] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
   const currency = 'YUG';
   const currentWallet = wallets.find(w => w.currency === currency) || { balance: 0 };
@@ -93,7 +95,22 @@ export default function TransferModal({ wallets, onClose, onSuccess }) {
         <form onSubmit={handleTransfer} className="flex flex-col gap-4">
 
           <div className="flex flex-col gap-2">
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Recipient Wallet Address</label>
+            <div className="flex justify-between items-center gap-2">
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Recipient Wallet Address</label>
+              <button type="button" className="scan-address-button" onClick={() => setShowScanner((visible) => !visible)}>
+                <ScanLine size={15} /> {showScanner ? 'Close scanner' : 'Scan QR'}
+              </button>
+            </div>
+            {showScanner && (
+              <WalletQrScanner
+                onClose={() => setShowScanner(false)}
+                onScan={(address) => {
+                  setDestinationAddress(address);
+                  setShowScanner(false);
+                  setError('');
+                }}
+              />
+            )}
             <input
               type="text"
               className="liquid-input"
