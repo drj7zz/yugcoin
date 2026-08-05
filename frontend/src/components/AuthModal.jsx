@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X, Lock, Mail, User, Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -7,15 +7,72 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
   const [name, setName] = useState('');
   const [email, setEmail] = useState(() => localStorage.getItem('yugcoin_remembered_email') || '');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => Boolean(localStorage.getItem('yugcoin_remembered_email')));
   const [securityPin, setSecurityPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const googleButtonRef = useRef(null);
+  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    if (!googleClientId || !googleButtonRef.current) return undefined;
+
+    const renderGoogleButton = () => {
+      if (!window.google?.accounts?.id || !googleButtonRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async ({ credential }) => {
+          setError('');
+          setLoading(true);
+          try {
+            const response = await api.googleAuth(credential, securityPin);
+            localStorage.setItem('yugcoin_token', response.token);
+            onSuccess(response.user, response.initialTransaction);
+          } catch (err) {
+            setError(err.message || 'Google sign-in failed.');
+          } finally {
+            setLoading(false);
+          }
+        }
+      });
+      googleButtonRef.current.innerHTML = '';
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: 'outline', size: 'large', width: 360,
+        text: mode === 'login' ? 'signin_with' : 'signup_with'
+      });
+    };
+
+    const script = document.querySelector('script[data-google-identity]');
+    if (script) {
+      script.addEventListener('load', renderGoogleButton);
+      renderGoogleButton();
+      return () => script.removeEventListener('load', renderGoogleButton);
+    }
+    const googleScript = document.createElement('script');
+    googleScript.src = 'https://accounts.google.com/gsi/client';
+    googleScript.async = true;
+    googleScript.defer = true;
+    googleScript.dataset.googleIdentity = 'true';
+    googleScript.addEventListener('load', renderGoogleButton);
+    document.head.appendChild(googleScript);
+    return () => googleScript.removeEventListener('load', renderGoogleButton);
+  }, [googleClientId, mode, securityPin, onSuccess]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (mode === 'register') {
+      if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(password)) {
+        setError('Use at least 8 characters with an uppercase letter, lowercase letter, and number.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Password confirmation does not match.');
+        return;
+      }
+    }
     setLoading(true);
 
     try {
@@ -23,7 +80,7 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
       if (mode === 'login') {
         res = await api.login(email, password);
       } else {
-        res = await api.register({ name, email, password, securityPin });
+        res = await api.register({ name, email, password, confirmPassword, securityPin });
       }
 
       if (res.success) {
@@ -105,6 +162,10 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
             </div>
           </div>
 
+          {mode === 'register' && (
+            <p className="auth-disclaimer">Use an official email address created in your own name. Your YugCoin username is generated from your account identity and cannot be changed later.</p>
+          )}
+
           <div className="flex flex-col gap-2">
             <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Password</label>
             <div style={{ position: 'relative' }}>
@@ -130,6 +191,22 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
               </button>
             </div>
           </div>
+
+          {mode === 'register' && (
+            <div className="flex flex-col gap-2">
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Confirm Password</label>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="liquid-input"
+                autoComplete="new-password"
+                placeholder="Re-enter your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+              <span className="password-requirements">At least 8 characters, with uppercase, lowercase, and a number.</span>
+            </div>
+          )}
 
           {mode === 'login' && (
             <label className="flex items-center gap-2" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
@@ -167,12 +244,15 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
           </button>
         </form>
 
+        <div className="auth-divider"><span>or continue with</span></div>
+        {googleClientId ? <div className="google-auth-button" ref={googleButtonRef} /> : <p className="google-config-notice">Google sign-in will be available after <code>REACT_APP_GOOGLE_CLIENT_ID</code> is configured.</p>}
+
         <div className="flex justify-between items-center" style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
           <span>
             {mode === 'login' ? "New to Yugcoin?" : "Already have a wallet?"}
           </span>
           <button
-            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}
+            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); setPassword(''); setConfirmPassword(''); }}
             style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 700 }}
           >
             {mode === 'login' ? 'Create Wallet' : 'Sign In'}

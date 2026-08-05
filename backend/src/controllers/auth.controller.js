@@ -12,11 +12,33 @@ function validateSecurityPin(pin) {
   return true;
 }
 
+function validatePassword(password) {
+  return typeof password === 'string'
+    && password.length >= 8
+    && /[a-z]/.test(password)
+    && /[A-Z]/.test(password)
+    && /\d/.test(password);
+}
+
+function createToken(user) {
+  return jwt.sign({ id: user._id || user.id, email: user.email, name: user.name, walletAddress: user.walletAddress, role: user.role || 'USER' }, JWT_SECRET, { expiresIn: '7d' });
+}
+
+function publicUser(user) {
+  return { id: user._id || user.id, name: user.name, username: user.username || user.email.split('@')[0], email: user.email, walletAddress: user.walletAddress, role: user.role || 'USER' };
+}
+
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, securityPin } = req.body;
+    const { name, email, password, confirmPassword, securityPin } = req.body;
     if (!name || !email || !password || !validateSecurityPin(securityPin)) {
       return res.status(400).json({ success: false, error: 'Please provide all required fields (name, email, password, securityPin). PIN must be exactly 4 digits.' });
+    }
+    if (!validatePassword(password)) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters and include uppercase, lowercase, and a number.' });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ success: false, error: 'Password confirmation does not match.' });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -81,6 +103,52 @@ exports.register = async (req, res) => {
   }
 };
 
+exports.googleAuth = async (req, res) => {
+  try {
+    const { credential, securityPin } = req.body;
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!credential || !clientId) {
+      return res.status(400).json({ success: false, error: 'Google sign-in is not configured.' });
+    }
+
+    const googleResponse = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
+    if (!googleResponse.ok) return res.status(401).json({ success: false, error: 'Google sign-in could not be verified.' });
+    const profile = await googleResponse.json();
+    if (profile.aud !== clientId || profile.email_verified !== 'true' || !['accounts.google.com', 'https://accounts.google.com'].includes(profile.iss)) {
+      return res.status(401).json({ success: false, error: 'Google account verification failed.' });
+    }
+
+    const email = String(profile.email).toLowerCase();
+    let user = await User.findOne({ $or: [{ googleSubject: profile.sub }, { email }] });
+    let initialTransaction;
+
+    if (!user) {
+      if (!validateSecurityPin(securityPin)) {
+        return res.status(400).json({ success: false, error: 'No YugCoin wallet was found for this Google account. Choose Create Wallet and enter a 4-digit transfer PIN to sign up.' });
+      }
+      const shortHash = cryptoRandomString(6);
+      const walletAddress = `YUG-${shortHash}`;
+      const username = `${String(profile.name || email.split('@')[0]).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'yug-user'}-${shortHash.toLowerCase()}`;
+      const randomPassword = await bcrypt.hash(`${profile.sub}-${Date.now()}-${Math.random()}`, 10);
+      const hashedPin = await bcrypt.hash(String(securityPin), 10);
+      user = await User.create({ name: profile.name || email.split('@')[0], username, email, password: randomPassword, securityPin: hashedPin, walletAddress, role: 'USER', avatar: profile.picture || '', authProvider: 'GOOGLE', googleSubject: profile.sub });
+
+      const [yugWallet] = await Wallet.create([{ userId: user._id, walletAddress, accountType: 'USER', currency: 'YUG', balance: 500 }, { userId: user._id, walletAddress, accountType: 'USER', currency: 'USD', balance: 100 }]);
+      const reserveWallet = await walletEngine.getSystemWallet('SYSTEM_RESERVE', 'YUG');
+      const Transaction = require('../models/Transaction');
+      initialTransaction = await Transaction.create({ transactionId: `INIT-${cryptoRandomString(8)}`, idempotencyKey: `INITIAL-${user._id}`, sourceWalletId: reserveWallet._id, destinationWalletId: yugWallet._id, sourceAddress: reserveWallet.walletAddress, destinationAddress: walletAddress, amount: 500, fee: 0, currency: 'YUG', type: 'SYSTEM_INITIALIZATION', status: 'COMPLETED', description: 'Initial demo YUG allocation' });
+    } else if (!user.googleSubject) {
+      user.googleSubject = profile.sub;
+      await user.save();
+    }
+
+    res.json({ success: true, token: createToken(user), user: publicUser(user), initialTransaction });
+  } catch (error) {
+    console.error('[Google Auth Error]', error);
+    res.status(500).json({ success: false, error: 'Unable to complete Google sign-in.' });
+  }
+};
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -136,6 +204,7 @@ exports.getProfile = async (req, res) => {
       user: {
         id: user._id || user.id,
         name: user.name,
+        username: user.username || user.email.split('@')[0],
         email: user.email,
         walletAddress: user.walletAddress,
         createdAt: user.createdAt

@@ -1,6 +1,6 @@
 {
   "name": "yugcoin-wallet-backend",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Financial Grade MERN Wallet Engine with Double-Entry Ledger and Realtime Sockets",
   "main": "src/server.js",
   "scripts": {

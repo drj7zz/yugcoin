@@ -15,7 +15,8 @@ YugCoin is an educational wallet application. It helps learners understand the b
 
 ## Features
 
-- JWT-based registration and sign-in
+- Email/password and Google registration and sign-in
+- Password strength validation, confirmation, and an account-email disclaimer
 - Personal YUG wallet balance dashboard
 - Fixed initial demo balance and wallet-to-wallet transfers
 - Permanent usernames for receiving payments without sharing wallet IDs
@@ -122,6 +123,7 @@ Create `backend/.env`:
 ```env
 MONGO_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
 JWT_SECRET=replace-with-a-long-random-secret
+GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 PORT=5000
 ```
 
@@ -141,6 +143,16 @@ In a separate terminal:
 cd frontend
 npm install
 ```
+
+Create `frontend/.env` with the matching Google OAuth web client ID:
+
+```env
+REACT_APP_GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
+REACT_APP_API_URL=http://localhost:5000/api
+REACT_APP_SOCKET_URL=http://localhost:5000
+```
+
+In Google Cloud Console, add your frontend URL (for example `http://localhost:3000`) to the OAuth client's authorized JavaScript origins.
 
 Set the local API URL in PowerShell, then start React:
 

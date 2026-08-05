@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema({
   walletAddress: { type: String, required: true, unique: true },
   role: { type: String, enum: ['USER', 'ADMIN'], default: 'USER' },
   avatar: { type: String, default: '' },
+  authProvider: { type: String, enum: ['PASSWORD', 'GOOGLE'], default: 'PASSWORD' },
+  googleSubject: { type: String, unique: true, sparse: true },
   createdAt: { type: Date, default: Date.now }
 });
 
