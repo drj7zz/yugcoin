@@ -1,5 +1,7 @@
 const express = require('express');
 const http = require('http');
+const path = require('path');
+const fs = require('fs');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
@@ -41,6 +43,14 @@ app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/admin', adminRoutes);
+
+// The independently built admin UI is served by this backend when available.
+// This keeps the administrator console and its protected API on one deployment.
+const adminBuildPath = path.resolve(__dirname, '../../admin-frontend/build');
+if (fs.existsSync(adminBuildPath)) {
+  app.use('/admin', express.static(adminBuildPath));
+  app.get('/admin/*', (req, res) => res.sendFile(path.join(adminBuildPath, 'index.html')));
+}
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
