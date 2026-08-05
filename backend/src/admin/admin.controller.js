@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Wallet = require('../models/Wallet');
 const Coupon = require('../models/Coupon');
 const Transaction = require('../models/Transaction');
+const walletEngine = require('../services/walletEngine.service');
 
 const cleanUser = (user, wallets = []) => ({ id: user._id, name: user.name, email: user.email, username: user.username, walletAddress: user.walletAddress, role: user.role, createdAt: user.createdAt, wallets });
 
@@ -42,6 +43,21 @@ exports.updateWallet = async (req, res) => {
   const wallet = await Wallet.findByIdAndUpdate(req.params.walletId, { status, updatedAt: new Date() }, { new: true });
   if (!wallet || wallet.accountType !== 'USER') return res.status(404).json({ success: false, error: 'User wallet not found.' });
   res.json({ success: true, wallet });
+};
+exports.depositToWallet = async (req, res) => {
+  const wallet = await Wallet.findById(req.params.walletId);
+  const amount = Number(req.body.amount);
+  if (!wallet || wallet.currency !== 'YUG' || wallet.accountType !== 'USER') return res.status(404).json({ success: false, error: 'YUG user wallet not found.' });
+  if (!(amount > 0)) return res.status(400).json({ success: false, error: 'Deposit amount must be positive.' });
+  const result = await walletEngine.processDeposit({ userId: wallet.userId, amount, currency: 'YUG', idempotencyKey: `ADMIN-DEP-${wallet._id}-${Date.now()}` });
+  res.json({ success: true, transaction: result.transaction });
+};
+exports.deleteUser = async (req, res) => {
+  if (String(req.user.id) === req.params.userId) return res.status(400).json({ success: false, error: 'You cannot deactivate your own administrator account.' });
+  const user = await User.findByIdAndUpdate(req.params.userId, { status: 'DELETED' }, { new: true });
+  if (!user) return res.status(404).json({ success: false, error: 'User not found.' });
+  await Wallet.updateMany({ userId: user._id }, { status: 'FROZEN', updatedAt: new Date() });
+  res.json({ success: true });
 };
 
 exports.listCoupons = async (req, res) => res.json({ success: true, coupons: await Coupon.find().sort({ createdAt: -1 }).lean() });

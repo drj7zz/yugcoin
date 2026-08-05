@@ -10,6 +10,8 @@ router.get('/users', admin.listUsers);
 router.get('/transactions', admin.listTransactions);
 router.patch('/users/:userId', admin.updateUser);
 router.patch('/wallets/:walletId', admin.updateWallet);
+router.post('/wallets/:walletId/deposit', admin.depositToWallet);
+router.delete('/users/:userId', admin.deleteUser);
 router.get('/coupons', admin.listCoupons);
 router.post('/coupons', admin.createCoupon);
 router.patch('/coupons/:couponId', admin.updateCoupon);

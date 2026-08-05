@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
   securityPin: { type: String, required: true }, // Encrypted 4-digit PIN for confirming operations
   walletAddress: { type: String, required: true, unique: true },
   role: { type: String, enum: ['USER', 'ADMIN'], default: 'USER' },
+  status: { type: String, enum: ['ACTIVE', 'DELETED'], default: 'ACTIVE' },
   avatar: { type: String, default: '' },
   authProvider: { type: String, enum: ['PASSWORD', 'GOOGLE'], default: 'PASSWORD' },
   googleSubject: { type: String, unique: true, sparse: true },
