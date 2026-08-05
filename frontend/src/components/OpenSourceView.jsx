@@ -4,10 +4,11 @@ import { BookOpen, Braces, CheckCircle2, Code2, Database, GitBranch, QrCode, Roc
 const features = [
   'JWT-based registration and sign-in',
   'Personal YUG wallet balance dashboard',
-  'Simulated deposits and wallet-to-wallet transfers',
+  'Initial demo balance and wallet-to-wallet transfers',
+  'Permanent usernames and YugCoin QR payment profiles for private receiving',
   'Payment reference, transfer PIN, and idempotency protection',
   'Live Socket.io transaction activity',
-  'QR wallet-address display, camera scanning, and image upload',
+  'QR payment profile display, camera scanning, and image upload',
   'Downloadable transaction statements and payment receipts',
   'Double-entry ledger records and hash-chain audit endpoint',
   'Responsive dashboard for desktop and mobile'
@@ -15,7 +16,8 @@ const features = [
 
 const roadmap = [
   'Optional usernames for private payments and QR requests.',
-  'Profile, password, PIN, and security settings.',
+  'Backend-validated coupons for controlled demo balance rewards.',
+  'Payment requests and a contributor quest board for community learning tasks.',
   'KYC-style verification and more robust account controls.',
   'Rewards, coupons, marketplace, and a controlled demo YUG economy.',
   'Public contribution rules, professional documentation, and a mobile app.'
@@ -26,7 +28,6 @@ const apiRoutes = [
   ['POST', '/api/auth/login', 'Sign in and receive a JWT'],
   ['GET', '/api/auth/me', 'Get the current user and wallets'],
   ['GET', '/api/wallet/balances', 'Get wallet balances'],
-  ['POST', '/api/wallet/deposit', 'Simulate a YUG deposit'],
   ['POST', '/api/wallet/transfer', 'Send simulated YUG to another wallet'],
   ['GET', '/api/wallet/history', 'Get wallet transaction history'],
   ['GET', '/api/wallet/audit', 'Verify ledger hash-chain integrity']
@@ -46,7 +47,7 @@ export default function OpenSourceView() {
 
       <section className="glass-card readme-section">
         <div className="readme-heading"><BookOpen size={20} /><h2>About YugCoin</h2></div>
-        <p>YugCoin is an educational wallet application. It helps learners understand account access, YUG balances, simulated deposits and transfers, transaction records, QR wallet addresses, and ledger integrity checks.</p>
+          <p>YugCoin is an educational wallet application. It helps learners understand account access, an initial demo YUG balance, transfers, transaction records, QR wallet addresses, and ledger integrity checks.</p>
         <div className="readme-notice"><ShieldCheck size={19} /><span><strong>Learning project only.</strong> YUG is not a real currency. YugCoin does not process real payments and must not be used to store or transfer real funds.</span></div>
       </section>
 
@@ -93,7 +94,7 @@ export default function OpenSourceView() {
 
       <section className="readme-two-column">
         <article className="glass-card readme-section">
-          <div className="readme-heading"><Rocket size={20} /><h2>Product roadmap</h2></div>
+          <div className="readme-heading"><Rocket size={20} /><h2>v1.1 and roadmap</h2></div>
           <ul className="readme-list">{roadmap.map((item) => <li key={item}>{item}</li>)}</ul>
         </article>
         <article className="glass-card readme-section">

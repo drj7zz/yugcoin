@@ -26,6 +26,7 @@ exports.register = async (req, res) => {
     // Generate readable unique wallet address e.g. YUG-8F3A92
     const shortHash = cryptoRandomString(6);
     const walletAddress = `YUG-${shortHash}`;
+    const username = `${String(name).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'yug-user'}-${shortHash.toLowerCase()}`;
 
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
@@ -34,6 +35,7 @@ exports.register = async (req, res) => {
 
     const newUser = await User.create({
       name,
+      username,
       email: email.toLowerCase(),
       password: hashedPassword,
       securityPin: hashedPin,
@@ -43,10 +45,26 @@ exports.register = async (req, res) => {
     
     const userId = newUser._id;
 
-    await Wallet.create([
+    const [yugWallet] = await Wallet.create([
       { userId, walletAddress, accountType: 'USER', currency: 'YUG', balance: 500 },
       { userId, walletAddress, accountType: 'USER', currency: 'USD', balance: 100 }
     ]);
+    const reserveWallet = await walletEngine.getSystemWallet('SYSTEM_RESERVE', 'YUG');
+    const Transaction = require('../models/Transaction');
+    const initialTransaction = await Transaction.create({
+      transactionId: `INIT-${cryptoRandomString(8)}`,
+      idempotencyKey: `INITIAL-${userId}`,
+      sourceWalletId: reserveWallet._id,
+      destinationWalletId: yugWallet._id,
+      sourceAddress: reserveWallet.walletAddress,
+      destinationAddress: walletAddress,
+      amount: 500,
+      fee: 0,
+      currency: 'YUG',
+      type: 'SYSTEM_INITIALIZATION',
+      status: 'COMPLETED',
+      description: 'Initial demo YUG allocation'
+    });
 
     const token = jwt.sign({ id: userId, email: email.toLowerCase(), name, walletAddress, role: 'USER' }, JWT_SECRET, { expiresIn: '7d' });
 
@@ -54,7 +72,8 @@ exports.register = async (req, res) => {
       success: true,
       message: 'Account registered successfully with bonus balances!',
       token,
-      user: { id: userId, name, email, walletAddress, role: 'USER' }
+      user: { id: userId, name, username, email, walletAddress, role: 'USER' },
+      initialTransaction
     });
   } catch (error) {
     console.error('[Register Error]', error);
@@ -89,6 +108,7 @@ exports.login = async (req, res) => {
       user: {
         id: userId,
         name: user.name,
+        username: user.username || user.email.split('@')[0],
         email: user.email,
         walletAddress: user.walletAddress,
         role: user.role || 'USER'
@@ -124,6 +144,55 @@ exports.getProfile = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Current password and new password are required.' });
+    }
+    if (String(newPassword).length < 8) {
+      return res.status(400).json({ success: false, error: 'New password must be at least 8 characters.' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user || !(await bcrypt.compare(currentPassword, user.password))) {
+      return res.status(401).json({ success: false, error: 'Current password is incorrect.' });
+    }
+    if (await bcrypt.compare(newPassword, user.password)) {
+      return res.status(400).json({ success: false, error: 'Choose a password that is different from your current password.' });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.json({ success: true, message: 'Password updated successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Unable to update password.' });
+  }
+};
+
+exports.changeSecurityPin = async (req, res) => {
+  try {
+    const { currentPin, newPin } = req.body;
+    if (!validateSecurityPin(newPin)) {
+      return res.status(400).json({ success: false, error: 'New PIN must be exactly 4 digits.' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user || !(await bcrypt.compare(String(currentPin || ''), user.securityPin))) {
+      return res.status(401).json({ success: false, error: 'Current PIN is incorrect.' });
+    }
+    if (String(currentPin) === String(newPin)) {
+      return res.status(400).json({ success: false, error: 'Choose a PIN that is different from your current PIN.' });
+    }
+
+    user.securityPin = await bcrypt.hash(String(newPin), 10);
+    await user.save();
+    res.json({ success: true, message: 'Security PIN updated successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Unable to update security PIN.' });
   }
 };
 

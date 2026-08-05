@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
+  username: { type: String, unique: true, sparse: true, immutable: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
   securityPin: { type: String, required: true }, // Encrypted 4-digit PIN for confirming operations

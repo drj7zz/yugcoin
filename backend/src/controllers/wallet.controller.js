@@ -42,7 +42,8 @@ exports.transfer = async (req, res) => {
       io.emit('wallet_update', {
         type: 'TRANSFER_COMPLETED',
         sourceAddress: req.user.walletAddress,
-        destinationAddress,
+        destinationAddress: result.transaction.destinationAddress,
+        destinationUsername: result.transaction.destinationUsername,
         amount,
         currency: currency || 'YUG',
         txId: result.transaction.transactionId

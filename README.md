@@ -17,15 +17,18 @@ YugCoin is an educational wallet application. It helps learners understand the b
 
 - JWT-based registration and sign-in
 - Personal YUG wallet balance dashboard
-- Simulated deposits and wallet-to-wallet transfers
+- Fixed initial demo balance and wallet-to-wallet transfers
+- Permanent usernames for receiving payments without sharing wallet IDs
 - Mandatory payment note/reference, transfer PIN confirmation, and idempotency protection
 - Live transaction activity with Socket.io updates
-- QR wallet-address display, copy, and JPEG download
+- YugCoin QR payment profiles carrying the recipient handle, name, and wallet UID
 - Camera QR scanner for recipient wallet addresses
 - QR-image upload scanner for PNG, JPG, and WebP images
 - Closable transaction statements with JPEG export
 - Immediate post-payment receipt preview with JPEG download and redo-payment action
-- Transaction history and double-entry ledger records
+- Transaction history and statements showing the counterparty name, username, and wallet ID
+- Profile page with secure password and transfer-PIN changes
+- Coupon redemption interface ready for backend validation; self top-ups are disabled
 - Cryptographic hash-chain ledger audit endpoint
 - Responsive dashboard for desktop and mobile
 
@@ -150,11 +153,23 @@ The dashboard opens at `http://localhost:3000`.
 
 ## QR scanner notes
 
-The QR scanner uses the browser's native `BarcodeDetector` API and requires camera permission for live scanning. If camera scanning is unavailable or permission is declined, manual wallet-address entry remains available. Uploaded QR images are read locally in the browser.
+The QR scanner uses the browser's native `BarcodeDetector` API and requires camera permission for live scanning. If camera scanning is unavailable or permission is declined, manual wallet-ID or username entry remains available. Uploaded QR images are read locally in the browser.
 
 ## Product roadmap
 
-- Add optional usernames so users can receive payments without sharing wallet IDs.
+### v1.1 — Current release
+
+- Receive YUG with a permanent username or YugCoin QR payment profile.
+- Keep a username, name, and wallet ID visible in transfer history and statements.
+- Manage password and transfer PIN securely from the Profile page.
+- Limit balances to the initial demo allocation until backend-validated coupons are available.
+
+### Upcoming
+
+- Add backend-validated coupon rewards and reusable payment requests.
+- Introduce a contributor quest board for community learning tasks and rewards.
+- Build the YUG marketplace on top of the controlled demo economy.
+
 - Improve the database structure for users, wallets, transactions, rewards, coupons, and marketplace orders.
 - Fix transaction statements with complete payment details, statuses, and download options.
 - Create an Account page for profile settings, password changes, PIN changes, and security controls.

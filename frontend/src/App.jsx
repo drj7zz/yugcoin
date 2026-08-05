@@ -8,21 +8,36 @@ import TransferModal from './components/TransferModal';
 import DepositWithdrawModal from './components/DepositWithdrawModal';
 import TransactionStatementModal from './components/TransactionStatementModal';
 import OpenSourceView from './components/OpenSourceView';
+import ProfileView from './components/ProfileView';
 import { api } from './services/api';
 import { Bell, Info, FolderKanban, Users, Github } from 'lucide-react';
+
+const tabs = new Set(['dashboard', 'insights', 'open-source', 'profile']);
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [wallets, setWallets] = useState([]);
   const [history, setHistory] = useState([]);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    const browserTab = window.history.state?.yugcoinTab;
+    const savedTab = sessionStorage.getItem('yugcoin_active_tab');
+    return tabs.has(browserTab) ? browserTab : (tabs.has(savedTab) ? savedTab : 'dashboard');
+  });
 
   // Modals
-  const [authModal, setAuthModal] = useState({ open: false, mode: 'login' });
+  const [authModal, setAuthModal] = useState(() => {
+    try {
+      const savedModal = JSON.parse(sessionStorage.getItem('yugcoin_auth_modal') || 'null');
+      return savedModal?.open && ['login', 'register'].includes(savedModal.mode) ? savedModal : { open: false, mode: 'login' };
+    } catch {
+      return { open: false, mode: 'login' };
+    }
+  });
+  const [isLoadingSession, setIsLoadingSession] = useState(() => Boolean(localStorage.getItem('yugcoin_token')));
   const [showSendModal, setShowSendModal] = useState(false);
   const [transferDraft, setTransferDraft] = useState({ destinationAddress: '', amount: '', description: '' });
   const [completedTransaction, setCompletedTransaction] = useState(null);
-  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showCouponModal, setShowCouponModal] = useState(false);
 
   // Toast notification
   const [toasts, setToasts] = useState([]);
@@ -35,12 +50,61 @@ export default function App() {
     }, 4000);
   };
 
+  const navigateTab = (tab) => {
+    if (!tabs.has(tab) || tab === activeTab) return;
+    window.history.pushState({ ...window.history.state, yugcoinTab: tab }, '', window.location.href);
+    setActiveTab(tab);
+  };
+
+  const pushOverlay = (overlay) => window.history.pushState({ ...window.history.state, yugcoinTab: activeTab, yugcoinOverlay: overlay }, '', window.location.href);
+  const clearOverlay = () => {
+    if (window.history.state?.yugcoinOverlay) window.history.replaceState({ ...window.history.state, yugcoinOverlay: null }, '', window.location.href);
+  };
+  const openAuth = (mode) => { pushOverlay('auth'); setAuthModal({ open: true, mode }); };
+  const closeAuth = () => { clearOverlay(); setAuthModal({ open: false, mode: 'login' }); };
+  const openSend = () => { pushOverlay('send'); setShowSendModal(true); };
+  const closeSend = () => { clearOverlay(); setShowSendModal(false); setTransferDraft({ destinationAddress: '', amount: '', description: '' }); };
+  const openCoupon = () => { pushOverlay('coupon'); setShowCouponModal(true); };
+  const closeCoupon = () => { clearOverlay(); setShowCouponModal(false); };
+  const openStatement = (transaction) => { pushOverlay('statement'); setCompletedTransaction(transaction); };
+  const closeStatement = () => { clearOverlay(); setCompletedTransaction(null); };
+
+  useEffect(() => {
+    sessionStorage.setItem('yugcoin_active_tab', activeTab);
+    if (!window.history.state?.yugcoinTab) {
+      window.history.replaceState({ ...window.history.state, yugcoinTab: activeTab }, '', window.location.href);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (authModal.open) sessionStorage.setItem('yugcoin_auth_modal', JSON.stringify(authModal));
+    else sessionStorage.removeItem('yugcoin_auth_modal');
+  }, [authModal]);
+
+  useEffect(() => {
+    const restoreTab = (event) => {
+      // Dashboard overlays own local state, so they need an explicit close
+      // signal when the browser Back button restores the page underneath.
+      setAuthModal({ open: false, mode: 'login' });
+      setShowSendModal(false);
+      setShowCouponModal(false);
+      setCompletedTransaction(null);
+      setTransferDraft({ destinationAddress: '', amount: '', description: '' });
+      window.dispatchEvent(new Event('yugcoin:close-overlay'));
+      const tab = event.state?.yugcoinTab;
+      setActiveTab(tabs.has(tab) ? tab : 'dashboard');
+    };
+    window.addEventListener('popstate', restoreTab);
+    return () => window.removeEventListener('popstate', restoreTab);
+  }, []);
+
   const loadUserData = async () => {
     const token = localStorage.getItem('yugcoin_token');
     if (!token) {
       setUser(null);
       setWallets([]);
       setHistory([]);
+      setIsLoadingSession(false);
       return;
     }
 
@@ -60,6 +124,8 @@ export default function App() {
       }
     } catch (err) {
       console.error('Error fetching user data', err);
+    } finally {
+      setIsLoadingSession(false);
     }
   };
 
@@ -109,14 +175,16 @@ export default function App() {
       <Navbar
         user={user}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onOpenAuth={(mode) => setAuthModal({ open: true, mode })}
+        setActiveTab={navigateTab}
+        onOpenAuth={openAuth}
         onLogout={handleLogout}
         onRefresh={loadUserData}
       />
 
       {/* Main Content Area */}
-      {!user ? (
+      {isLoadingSession ? (
+        <div className="session-loading glass-card animate-slide-in">Restoring your wallet session…</div>
+      ) : !user ? (
         <div className="flex flex-col items-center justify-center mt-8">
           <div className="glass-card landing-hero-content animate-slide-in w-full">
 
@@ -130,10 +198,10 @@ export default function App() {
             </div>
 
             <div className="flex justify-center gap-4 mt-8">
-              <button className="liquid-btn-primary" style={{ fontSize: '1.1rem' }} onClick={() => setAuthModal({ open: true, mode: 'register' })}>
+              <button className="liquid-btn-primary" style={{ fontSize: '1.1rem' }} onClick={() => openAuth('register')}>
                 Get Started Now
               </button>
-              <button className="liquid-btn-secondary" style={{ fontSize: '1.1rem' }} onClick={() => setAuthModal({ open: true, mode: 'login' })}>
+              <button className="liquid-btn-secondary" style={{ fontSize: '1.1rem' }} onClick={() => openAuth('login')}>
                 Access Wallet
               </button>
             </div>
@@ -145,8 +213,8 @@ export default function App() {
               </div>
               <div className="journey-grid">
                 <div><strong>v1.0</strong><p>Secure wallet accounts, YUG balances, transfers, and a transparent double-entry ledger.</p></div>
-                <div><strong>v1.1</strong><p>QR receive and scan tools, payment receipts, and downloadable statements.</p></div>
-                <div><strong>Upcoming</strong><p>Private usernames, account security, rewards, coupons, and a YUG marketplace.</p></div>
+                <div><strong>v1.1</strong><p>Username payments, YugCoin QR profiles, account security, payment receipts, and downloadable statements.</p></div>
+                <div><strong>Upcoming</strong><p>Validated coupon rewards, payment requests, a contributor quest board, and a YUG marketplace.</p></div>
               </div>
               <p className="journey-note">Sign in to explore the complete project documentation and roadmap.</p>
             </section>
@@ -165,7 +233,7 @@ export default function App() {
                   <FolderKanban size={32} />
                 </div>
                 <h2 className="font-bold" style={{ fontSize: '1.25rem' }}>The Project</h2>
-                <p>Create a wallet, follow your balance, make transfers, add or withdraw funds, and see your activity in one approachable experience.</p>
+                <p>Create a wallet, follow your balance, make username-based transfers, redeem future coupons, and see your activity in one approachable experience.</p>
               </section>
 
               <section className="feature-card landing-info-card">
@@ -204,23 +272,25 @@ export default function App() {
               history={history}
               onOpenSend={() => {
                 setTransferDraft({ destinationAddress: '', amount: '', description: '' });
-                setShowSendModal(true);
+                openSend();
               }}
-              onOpenDeposit={() => setShowDepositModal(true)}
-              onNavigateInsights={() => setActiveTab('insights')}
+              onOpenCoupon={openCoupon}
+              onNavigateInsights={() => navigateTab('insights')}
+              onNavigateProfile={() => navigateTab('profile')}
               onScanRecipient={(address) => {
                 setTransferDraft({ destinationAddress: address, amount: '', description: '' });
-                setShowSendModal(true);
+                openSend();
               }}
               onRedoPayment={(draft) => {
                 setTransferDraft(draft);
-                setShowSendModal(true);
+                openSend();
               }}
             />
           )}
 
           {activeTab === 'insights' && <InsightsView history={history} wallets={wallets} />}
           {activeTab === 'open-source' && <OpenSourceView />}
+          {activeTab === 'profile' && <ProfileView user={user} />}
         </div>
       )}
 
@@ -228,11 +298,12 @@ export default function App() {
       {authModal.open && (
         <AuthModal
           initialMode={authModal.mode}
-          onClose={() => setAuthModal({ open: false, mode: 'login' })}
-          onSuccess={(loggedUser) => {
-            setAuthModal({ open: false, mode: 'login' });
+          onClose={closeAuth}
+          onSuccess={(loggedUser, initialTransaction) => {
+            closeAuth();
             loadUserData();
             addToast(`Welcome, ${loggedUser.name}`, 'success');
+            if (initialTransaction) openStatement(initialTransaction);
           }}
         />
       )}
@@ -243,23 +314,23 @@ export default function App() {
             initialDestinationAddress={transferDraft.destinationAddress}
             initialAmount={transferDraft.amount}
             initialDescription={transferDraft.description}
-            onClose={() => {
-              setShowSendModal(false);
-              setTransferDraft({ destinationAddress: '', amount: '', description: '' });
-            }}
+            onClose={closeSend}
           onSuccess={(msg, transaction) => {
             addToast(msg, 'success');
-            setCompletedTransaction(transaction);
+            closeSend();
+            openStatement(transaction);
             loadUserData();
           }}
         />
       )}
 
-      {showDepositModal && (
+      {showCouponModal && (
         <DepositWithdrawModal
-          onClose={() => setShowDepositModal(false)}
-          onSuccess={(msg) => {
+          onClose={closeCoupon}
+          onSuccess={(msg, transaction) => {
             addToast(msg, 'success');
+            closeCoupon();
+            if (transaction) openStatement(transaction);
             loadUserData();
           }}
         />
@@ -269,11 +340,12 @@ export default function App() {
         <TransactionStatementModal
           transaction={completedTransaction}
           walletAddress={user?.walletAddress}
-          onClose={() => setCompletedTransaction(null)}
+          user={user}
+          onClose={closeStatement}
           onRedo={(draft) => {
-            setCompletedTransaction(null);
+            closeStatement();
             setTransferDraft(draft);
-            setShowSendModal(true);
+            openSend();
           }}
         />
       )}

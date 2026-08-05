@@ -1,6 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Camera, CameraOff, LoaderCircle, Upload, X } from 'lucide-react';
 
+function recipientFromQr(value) {
+  const [prefix, username] = String(value || '').split('|');
+  return prefix === 'YUGCOIN' && username ? `@${username}` : value;
+}
+
 export default function WalletQrScanner({ onScan, onClose }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -31,7 +36,7 @@ export default function WalletQrScanner({ onScan, onClose }) {
         setStatus('No QR code was found in that image. Try another image or use the camera.');
         return;
       }
-      onScan(value);
+      onScan(recipientFromQr(value));
     } catch {
       setStatus('That image could not be read. Try a clear PNG or JPG QR image.');
     } finally {
@@ -83,7 +88,7 @@ export default function WalletQrScanner({ onScan, onClose }) {
             const value = codes[0]?.rawValue?.trim();
             if (value) {
               stopCamera();
-              onScan(value);
+              onScan(recipientFromQr(value));
               return;
             }
           } catch {

@@ -1,14 +1,31 @@
-import React, { useState } from 'react';
-import { Send, ArrowDownRight, Copy, Check, BarChart2, ArrowUpRight, Clock, User, QrCode, ScanLine, Download, ReceiptText, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Send, Ticket, Copy, Check, BarChart2, ArrowDownRight, ArrowUpRight, Clock, User, QrCode, ScanLine, Download, ReceiptText, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import WalletQrScanner from './WalletQrScanner';
 import TransactionStatementModal from './TransactionStatementModal';
 
-export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDeposit, onNavigateInsights, onScanRecipient, onRedoPayment }) {
+export default function Dashboard({ user, wallets, history, onOpenSend, onOpenCoupon, onNavigateInsights, onNavigateProfile, onScanRecipient, onRedoPayment }) {
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [statementTransaction, setStatementTransaction] = useState(null);
+
+  const openOverlay = (overlay) => window.history.pushState({ ...window.history.state, yugcoinTab: 'dashboard', yugcoinOverlay: overlay }, '', window.location.href);
+  const clearOverlay = () => {
+    if (window.history.state?.yugcoinOverlay) window.history.replaceState({ ...window.history.state, yugcoinOverlay: null }, '', window.location.href);
+  };
+  const closeDashboardOverlay = () => { clearOverlay(); setShowQR(false); setShowScanner(false); setStatementTransaction(null); };
+  const openStatement = (transaction) => { openOverlay('statement'); setStatementTransaction(transaction); };
+
+  useEffect(() => {
+    const closeOnBack = () => closeDashboardOverlay();
+    window.addEventListener('popstate', closeOnBack);
+    window.addEventListener('yugcoin:close-overlay', closeOnBack);
+    return () => {
+      window.removeEventListener('popstate', closeOnBack);
+      window.removeEventListener('yugcoin:close-overlay', closeOnBack);
+    };
+  }, []);
 
   const downloadQr = () => {
     const svg = document.querySelector('.qr-code-frame svg');
@@ -18,12 +35,28 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
     const serialized = new XMLSerializer().serializeToString(svg);
     image.onload = () => {
       const canvas = document.createElement('canvas');
-      canvas.width = 512;
-      canvas.height = 512;
+      canvas.width = 720;
+      canvas.height = 850;
       const context = canvas.getContext('2d');
-      context.fillStyle = '#ffffff';
+      context.fillStyle = '#f8fafc';
       context.fillRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      context.fillStyle = '#0f172a';
+      context.font = '700 42px Arial, sans-serif';
+      context.textAlign = 'center';
+      context.fillText('YugCoin', canvas.width / 2, 64);
+      context.fillStyle = '#475569';
+      context.font = '500 20px Arial, sans-serif';
+      context.fillText('Scan to send YUG', canvas.width / 2, 98);
+      context.drawImage(image, 150, 130, 420, 420);
+      const rows = [receiveIdentifier, user?.name || '—', user?.walletAddress || '—'];
+      rows.forEach((row, index) => {
+        context.fillStyle = index === 0 ? '#0369a1' : '#334155';
+        context.font = index === 0 ? '700 25px Arial, sans-serif' : '500 19px monospace';
+        context.fillText(row, canvas.width / 2, 620 + (index * 54));
+      });
+      context.fillStyle = '#64748b';
+      context.font = '500 16px Arial, sans-serif';
+      context.fillText('YugCoin payment profile', canvas.width / 2, 800);
 
       const link = document.createElement('a');
       link.download = `yugcoin-wallet-${user?.walletAddress || 'qr'}.jpeg`;
@@ -34,10 +67,13 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
   };
 
   const activeWallet = wallets.find(w => w.currency === 'YUG') || { balance: 0, walletAddress: user?.walletAddress || 'N/A' };
+  const username = user?.username || user?.email?.split('@')[0] || '';
+  const receiveIdentifier = username ? `@${username}` : user?.walletAddress || 'N/A';
+  const qrPaymentPayload = `YUGCOIN|${username}|${encodeURIComponent(user?.name || '')}|${user?.walletAddress || ''}`;
 
   const handleCopy = () => {
     if (user?.walletAddress) {
-      navigator.clipboard.writeText(user.walletAddress);
+      navigator.clipboard.writeText(receiveIdentifier);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -50,21 +86,22 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
       <div className="glass-card" style={{ padding: '2rem' }}>
 
         <div className="flex justify-between items-center" style={{ flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
-          <div className="flex items-center gap-4">
+          <button type="button" className="dashboard-profile-trigger flex items-center gap-4" onClick={onNavigateProfile} title="Open profile and security settings">
             <div className="flex items-center justify-center" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'var(--text-main)' }}>
               <User size={28} />
             </div>
             <div>
               <div className="font-extrabold" style={{ fontSize: '1.25rem', color: 'var(--text-main)' }}>Welcome back, {user?.name}</div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '0.25rem' }}>ID: {user?.walletAddress}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--primary)', fontFamily: 'monospace', marginTop: '0.25rem' }}>{receiveIdentifier}</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '0.15rem' }}>Wallet ID: {user?.walletAddress}</div>
             </div>
-          </div>
+          </button>
 
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
-                setShowQR((visible) => !visible);
-                setShowScanner(false);
+                if (showQR) closeDashboardOverlay();
+                else { openOverlay('qr'); setShowQR(true); setShowScanner(false); }
               }}
               className="liquid-btn-secondary flex items-center justify-center gap-2"
               style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
@@ -73,8 +110,8 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
             </button>
             <button
               onClick={() => {
-                setShowScanner((visible) => !visible);
-                setShowQR(false);
+                if (showScanner) closeDashboardOverlay();
+                else { openOverlay('scanner'); setShowScanner(true); setShowQR(false); }
               }}
               className="liquid-btn-secondary flex items-center justify-center gap-2"
               style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
@@ -87,7 +124,7 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
               style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: copied ? '#10b981' : undefined }}
             >
               {copied ? <Check size={16} /> : <Copy size={16} />}
-              {copied ? 'Copied' : 'Copy ID'}
+              {copied ? 'Copied' : 'Copy Username'}
             </button>
           </div>
         </div>
@@ -98,17 +135,23 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
             <div className="qr-receive-copy">
               <div className="flex justify-between items-center w-full">
                 <span className="qr-receive-label">Receive YUG</span>
-                <button type="button" className="scanner-close" onClick={() => setShowQR(false)} aria-label="Close QR code"><X size={16} /></button>
+                <button type="button" className="scanner-close" onClick={closeDashboardOverlay} aria-label="Close QR code"><X size={16} /></button>
               </div>
               <strong>Scan to receive assets</strong>
-              <p>Share this code to receive funds directly in your wallet.</p>
-              <code>{user?.walletAddress || 'N/A'}</code>
+              <p>Share your username QR to receive funds without exposing your wallet ID.</p>
               <button type="button" className="scan-address-button" onClick={downloadQr}>
                 <Download size={15} /> Download JPEG
               </button>
             </div>
-            <div className="qr-code-frame">
-              <QRCodeSVG value={user?.walletAddress || 'N/A'} size={180} fgColor="#111827" bgColor="#ffffff" level="M" includeMargin />
+            <div className="qr-receive-visual">
+              <div className="qr-code-frame">
+                <QRCodeSVG value={qrPaymentPayload} size={180} fgColor="#111827" bgColor="#ffffff" level="M" includeMargin />
+              </div>
+              <div className="qr-identity-details">
+                <p>{receiveIdentifier}</p>
+                <p>{user?.name || '—'}</p>
+                <p>{user?.walletAddress || '—'}</p>
+              </div>
             </div>
           </div>
         )}
@@ -116,9 +159,9 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
         {showScanner && (
           <div style={{ marginBottom: '2rem' }}>
             <WalletQrScanner
-              onClose={() => setShowScanner(false)}
+              onClose={closeDashboardOverlay}
               onScan={(address) => {
-                setShowScanner(false);
+                closeDashboardOverlay();
                 onScanRecipient(address);
               }}
             />
@@ -142,8 +185,8 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
             <Send size={18} /> Send Funds
           </button>
 
-          <button className="liquid-btn-secondary flex items-center justify-center gap-2" onClick={onOpenDeposit} style={{ padding: '1rem' }}>
-            <ArrowDownRight size={18} color="#10b981" /> Deposit Assets
+          <button className="liquid-btn-secondary flex items-center justify-center gap-2" onClick={onOpenCoupon} style={{ padding: '1rem' }}>
+            <Ticket size={18} color="#f9a8d4" /> Redeem Coupon
           </button>
 
           <button className="liquid-btn-secondary flex items-center justify-center gap-2" onClick={onNavigateInsights} style={{ padding: '1rem' }}>
@@ -192,11 +235,11 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
                     transition: 'transform 0.2s',
                     cursor: 'pointer'
                   }}
-                  onClick={() => setStatementTransaction(tx)}
+                  onClick={() => openStatement(tx)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
-                      setStatementTransaction(tx);
+                      openStatement(tx);
                     }
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateX(4px)'; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
@@ -212,7 +255,7 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
                         {displayType}
                       </div>
                       <div className="flex items-center gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-                        <span>Ref: {isSender ? tx.destinationAddress?.substring(0,8) + '...' : tx.sourceAddress?.substring(0,8) + '...'}</span>
+                        <span>Ref: {isSender ? (tx.destinationUsername ? `@${tx.destinationUsername}` : tx.destinationAddress?.substring(0,8) + '...') : (tx.sourceUsername ? `@${tx.sourceUsername}` : tx.sourceAddress?.substring(0,8) + '...')}</span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
                           <Clock size={12} /> {new Date(tx.createdAt).toLocaleTimeString()}
@@ -230,7 +273,7 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
                         Fee: {tx.fee} YUG
                       </div>
                     )}
-                    <button type="button" className="statement-link" onClick={(event) => { event.stopPropagation(); setStatementTransaction(tx); }}><ReceiptText size={14} /> Statement</button>
+                    <button type="button" className="statement-link" onClick={(event) => { event.stopPropagation(); openStatement(tx); }}><ReceiptText size={14} /> Statement</button>
                   </div>
                 </div>
               );
@@ -239,7 +282,7 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenDe
         )}
       </div>
 
-      {statementTransaction && <TransactionStatementModal transaction={statementTransaction} walletAddress={user?.walletAddress} onClose={() => setStatementTransaction(null)} onRedo={(draft) => { setStatementTransaction(null); onRedoPayment(draft); }} />}
+      {statementTransaction && <TransactionStatementModal transaction={statementTransaction} walletAddress={user?.walletAddress} user={user} onClose={closeDashboardOverlay} onRedo={(draft) => { closeDashboardOverlay(); onRedoPayment(draft); }} />}
 
     </div>
   );

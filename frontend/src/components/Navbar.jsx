@@ -59,6 +59,17 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
               >
                 <div className="flex items-center gap-2"><Code2 size={16} /> <span style={{ fontSize: '0.9rem' }}>Open Source</span></div>
               </button>
+              <button
+                className="liquid-btn-secondary"
+                style={{
+                  padding: '0.5rem 1rem', border: 'none',
+                  background: activeTab === 'profile' ? 'rgba(255,255,255,0.2)' : 'transparent',
+                  color: activeTab === 'profile' ? 'var(--text-main)' : 'var(--text-muted)'
+                }}
+                onClick={() => setActiveTab('profile')}
+              >
+                <div className="flex items-center gap-2"><User size={16} /> <span style={{ fontSize: '0.9rem' }}>Profile</span></div>
+              </button>
             </div>
 
             <div className="navbar-actions flex items-center gap-4">
@@ -71,7 +82,7 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
                 <RefreshCw size={18} />
               </button>
 
-              <div className="navbar-user flex items-center gap-3" style={{ paddingLeft: '1rem', borderLeft: '1px solid var(--glass-border)' }}>
+              <button type="button" className="navbar-user profile-nav-trigger flex items-center gap-3" onClick={() => setActiveTab('profile')} title="Open profile and security settings">
                 <div className="flex items-center justify-center" style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: 'var(--text-main)' }}>
                   <User size={18} />
                 </div>
@@ -79,7 +90,7 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
                   <span className="font-bold" style={{ fontSize: '0.85rem' }}>{user.name}</span>
                   <span style={{ fontSize: '0.7rem', opacity: 0.6, fontFamily: 'monospace' }}>{user.walletAddress?.substring(0, 10)}...</span>
                 </div>
-              </div>
+              </button>
 
               <button className="liquid-btn-secondary flex items-center justify-center" onClick={onLogout} style={{ padding: '0.5rem', borderRadius: '0.5rem', border: 'none', color: '#f43f5e', background: 'rgba(244, 63, 94, 0.1)' }} title="Sign Out">
                 <LogOut size={16} />

@@ -57,8 +57,8 @@ export default function TransferModal({ wallets, onClose, onSuccess, initialDest
       });
 
       if (res.success) {
-        onSuccess('Transfer executed successfully', res.transaction);
         onClose();
+        onSuccess('Transfer executed successfully', res.transaction);
       } else {
         setError(res.error || 'Transfer failed');
       }
@@ -100,7 +100,7 @@ export default function TransferModal({ wallets, onClose, onSuccess, initialDest
 
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center gap-2">
-              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Recipient Wallet Address</label>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Recipient wallet ID or username</label>
               <button type="button" className="scan-address-button" onClick={() => setShowScanner((visible) => !visible)}>
                 <ScanLine size={15} /> {showScanner ? 'Close scanner' : 'Scan QR'}
               </button>
@@ -119,7 +119,7 @@ export default function TransferModal({ wallets, onClose, onSuccess, initialDest
               type="text"
               className="liquid-input"
               style={{ fontFamily: 'monospace' }}
-              placeholder="e.g. YUG-8F3A29B"
+              placeholder="e.g. @alex-8f3a92 or YUG-8F3A29B"
               value={destinationAddress}
               onChange={(e) => setDestinationAddress(e.target.value.trim())}
               required

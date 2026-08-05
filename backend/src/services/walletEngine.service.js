@@ -12,6 +12,14 @@ function calculateEntryHash(prevHash, entryId, transactionId, walletId, type, am
   return crypto.createHash('sha256').update(data).digest('hex');
 }
 
+function usernameFor(user) {
+  return user?.username || user?.email?.split('@')[0] || '';
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Get latest hash in the global ledger chain
 async function getLastLedgerHash() {
   const lastEntry = await LedgerEntry.findOne().sort({ timestamp: -1, _id: -1 });
@@ -111,9 +119,20 @@ class WalletEngineService {
         throw new Error(`Insufficient funds. Required: ${totalDeduction} ${currency}, Available: ${sourceWallet.balance}`);
       }
 
-      const destWallet = await Wallet.findOne({ walletAddress: destinationAddress, currency }).session(session);
-      if (!destWallet) throw new Error(`Recipient wallet address '${destinationAddress}' not found for currency ${currency}`);
+      const recipientInput = String(destinationAddress || '').trim();
+      let destWallet = await Wallet.findOne({ walletAddress: recipientInput, currency }).session(session);
+      let destinationUser;
+      if (!destWallet) {
+        const username = recipientInput.replace(/^@/, '').toLowerCase();
+        destinationUser = await User.findOne({ username }).session(session);
+        if (!destinationUser) destinationUser = await User.findOne({ email: new RegExp(`^${escapeRegex(username)}@`, 'i') }).session(session);
+        if (destinationUser) destWallet = await Wallet.findOne({ userId: { $in: this.normalizeUserIdVariants(destinationUser._id) }, currency }).session(session);
+      }
+      if (!destWallet) throw new Error(`Recipient '${recipientInput}' was not found. Enter a wallet ID or @username.`);
       if (destWallet._id.toString() === sourceWallet._id.toString()) throw new Error('Cannot transfer to your own wallet');
+
+      if (!destinationUser) destinationUser = await User.findOne({ walletAddress: destWallet.walletAddress }).session(session);
+      const sourceUser = await User.findById(sourceUserId).session(session);
 
       const feeWallet = await Wallet.findOne({ accountType: 'FEE_POOL', currency }).session(session);
 
@@ -140,12 +159,16 @@ class WalletEngineService {
         destinationWalletId: destWallet._id,
         sourceAddress: sourceWallet.walletAddress,
         destinationAddress: destWallet.walletAddress,
+        sourceUsername: usernameFor(sourceUser),
+        destinationUsername: usernameFor(destinationUser),
+        sourceName: sourceUser?.name || '',
+        destinationName: destinationUser?.name || '',
         amount,
         fee,
         currency,
         type: 'TRANSFER',
         status: 'COMPLETED',
-        description: description || `Transfer to ${destinationAddress}`
+        description: description || `Transfer to @${usernameFor(destinationUser) || destWallet.walletAddress}`
       });
       await transactionRecord.save({ session });
 
@@ -317,9 +340,20 @@ class WalletEngineService {
 
   // Get Transactions History
   async getTransactionHistory(walletAddress) {
-    return await Transaction.find({
+    const transactions = await Transaction.find({
       $or: [{ sourceAddress: walletAddress }, { destinationAddress: walletAddress }]
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
+    const addresses = [...new Set(transactions.flatMap((transaction) => [transaction.sourceAddress, transaction.destinationAddress]).filter(Boolean))];
+    const users = await User.find({ walletAddress: { $in: addresses } }).select('walletAddress name username email').lean();
+    const identities = new Map(users.map((user) => [user.walletAddress, { name: user.name, username: usernameFor(user) }]));
+
+    return transactions.map((transaction) => ({
+      ...transaction,
+      sourceName: transaction.sourceName || identities.get(transaction.sourceAddress)?.name || '',
+      sourceUsername: transaction.sourceUsername || identities.get(transaction.sourceAddress)?.username || '',
+      destinationName: transaction.destinationName || identities.get(transaction.destinationAddress)?.name || '',
+      destinationUsername: transaction.destinationUsername || identities.get(transaction.destinationAddress)?.username || ''
+    }));
   }
 }
 

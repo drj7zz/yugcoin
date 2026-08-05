@@ -52,6 +52,24 @@ export const api = {
     return handleResponse(res);
   },
 
+  changePassword: async (currentPassword, newPassword) => {
+    const res = await fetch(`${API_BASE}/auth/password`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ currentPassword, newPassword })
+    });
+    return handleResponse(res);
+  },
+
+  changeSecurityPin: async (currentPin, newPin) => {
+    const res = await fetch(`${API_BASE}/auth/security-pin`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ currentPin, newPin })
+    });
+    return handleResponse(res);
+  },
+
   // Wallet Engine Operations
   getBalances: async () => {
     const res = await fetch(`${API_BASE}/wallet/balances`, {
@@ -68,18 +86,6 @@ export const api = {
         'X-Idempotency-Key': transferData.idempotencyKey || `TX-KEY-${Date.now()}`
       },
       body: JSON.stringify(transferData)
-    });
-    return handleResponse(res);
-  },
-
-  deposit: async (amount, currency = 'YUG') => {
-    const res = await fetch(`${API_BASE}/wallet/deposit`, {
-      method: 'POST',
-      headers: {
-        ...getHeaders(),
-        'X-Idempotency-Key': `DEP-KEY-${Date.now()}`
-      },
-      body: JSON.stringify({ amount, currency })
     });
     return handleResponse(res);
   },

@@ -33,7 +33,7 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
         } else if (mode === 'login') {
           localStorage.removeItem('yugcoin_remembered_email');
         }
-        onSuccess(res.user);
+        onSuccess(res.user, res.initialTransaction);
       } else {
         setError(res.error || 'Authentication failed');
       }

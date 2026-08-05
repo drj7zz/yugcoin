@@ -7,7 +7,6 @@ router.use(authMiddleware);
 
 router.get('/balances', walletController.getWallets);
 router.post('/transfer', walletController.transfer);
-router.post('/deposit', walletController.deposit);
 router.get('/history', walletController.getHistory);
 router.get('/audit', walletController.getLedgerAudit);
 
