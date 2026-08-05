@@ -9,6 +9,7 @@ const { connectDB } = require('./config/database');
 const authRoutes = require('./routes/auth.routes');
 const walletRoutes = require('./routes/wallet.routes');
 const adminRoutes = require('./admin/admin.routes');
+const User = require('./models/User');
 const seedData = require('./seed');
 
 const app = express();
@@ -70,6 +71,12 @@ const PORT = process.env.PORT || 5000;
 
 async function startServer() {
   await connectDB();
+  const adminEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  if (adminEmail) {
+    const admin = await User.findOneAndUpdate({ email: adminEmail }, { role: 'ADMIN' }, { new: true });
+    if (admin) console.log(`[Admin] Administrator role verified for ${admin.email}`);
+    else console.warn('[Admin] ADMIN_EMAIL does not match an existing YugCoin account.');
+  }
   await seedData();
 
   server.listen(PORT, () => {
