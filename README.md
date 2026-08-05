@@ -169,12 +169,24 @@ The QR scanner uses the browser's native `BarcodeDetector` API and requires came
 
 ## Product roadmap
 
-### v1.1 — Current release
+### v1.0 — Wallet foundations
+
+- Secure wallet accounts, demo YUG balances, transfers, and a transparent double-entry ledger.
+
+### v1.1 — Payments and account tools
 
 - Receive YUG with a permanent username or YugCoin QR payment profile.
 - Keep a username, name, and wallet ID visible in transfer history and statements.
 - Manage password and transfer PIN securely from the Profile page.
 - Limit balances to the initial demo allocation until backend-validated coupons are available.
+
+### v1.2.0 — Current release
+
+- Add Google sign-in and signup with server-side credential verification.
+- Add strong password requirements, password confirmation, and official-email/username guidance.
+- Fix browser Back behavior so open popups close before navigation continues.
+- Separate send and receive contexts in transaction statements to clearly identify the sender and recipient.
+- Export complete YugCoin-themed JPEG statements and improve responsive mobile UI behavior.
 
 ### Upcoming
 
@@ -201,6 +213,7 @@ The QR scanner uses the browser's native `BarcodeDetector` API and requires came
 | --- | --- | --- |
 | `POST` | `/api/auth/register` | Create a learning wallet account |
 | `POST` | `/api/auth/login` | Sign in and receive a JWT |
+| `POST` | `/api/auth/google` | Verify a Google credential and sign in or create a wallet |
 | `GET` | `/api/auth/me` | Get the current user and wallets |
 | `GET` | `/api/wallet/balances` | Get wallet balances |
 | `POST` | `/api/wallet/deposit` | Simulate a YUG deposit |

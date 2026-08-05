@@ -45,11 +45,12 @@ export default function ProfileView({ user }) {
   };
 
   const username = user?.username || user?.email?.split('@')[0] || 'Not available';
+  const displayName = user?.name || 'Your profile';
 
   return <main className="profile-view animate-slide-in">
     <section className="glass-card profile-hero">
       <div className="profile-avatar"><UserRound size={28} /></div>
-      <div><span className="qr-receive-label">Account settings</span><h1 className="hero-title" style={{ fontSize: '3rem', marginTop: '0.3rem' }}>Your profile</h1><p>@{username} · <code>{user?.walletAddress}</code></p></div>
+      <div><span className="qr-receive-label">Account settings</span><h1 className="hero-title" style={{ fontSize: '3rem', marginTop: '0.3rem' }}>{displayName}</h1><p className="profile-identity"><span>@{username}</span><span>{user?.walletAddress || 'Wallet ID unavailable'}</span></p></div>
     </section>
     <section className="glass-card profile-details-card">
       <div className="readme-heading"><UserRound size={20} /><h2>Account details</h2></div>
@@ -58,7 +59,7 @@ export default function ProfileView({ user }) {
         <div><dt>Full name</dt><dd>{user?.name || '—'}</dd></div>
         <div><dt>Email address</dt><dd>{user?.email || '—'}</dd></div>
         <div><dt>Username</dt><dd>@{username}</dd></div>
-        <div><dt>Wallet ID</dt><dd><code>{user?.walletAddress || '—'}</code></dd></div>
+        <div><dt>Wallet ID</dt><dd>{user?.walletAddress || '—'}</dd></div>
       </dl>
     </section>
     <div className="profile-grid">

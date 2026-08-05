@@ -31,7 +31,7 @@ export default function DepositWithdrawModal({ onClose }) {
         <form onSubmit={handleRedeem} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Coupon code</label>
-            <input type="text" className="liquid-input" style={{ fontFamily: 'monospace', letterSpacing: '0.08em', textTransform: 'uppercase' }} placeholder="YUG-XXXX-XXXX" value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} required />
+            <input type="text" className="liquid-input" style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }} placeholder="YUG-XXXX-XXXX" value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} required />
           </div>
 
           <div className="coupon-info"><ShieldCheck size={18} /><span>Your wallet is limited to the YUG balance received when it was created. Self top-ups are disabled. Valid coupon codes will be securely checked by the backend in a future release.</span></div>

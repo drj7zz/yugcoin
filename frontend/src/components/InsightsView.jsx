@@ -182,7 +182,7 @@ export default function InsightsView({ history, wallets }) {
             </div>
             <div className="flex justify-between items-center" style={{ paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
               <span style={{ color: 'var(--text-muted)' }}>Journal Reference Hash:</span>
-              <span style={{ fontFamily: 'monospace', color: 'var(--primary)', letterSpacing: '0.05em' }}>{audit.latestHash ? audit.latestHash.substring(0, 32) + '...' : 'N/A'}</span>
+              <span style={{ color: 'var(--primary)', letterSpacing: '0.05em' }}>{audit.latestHash ? audit.latestHash.substring(0, 32) + '...' : 'N/A'}</span>
             </div>
           </div>
         </div>

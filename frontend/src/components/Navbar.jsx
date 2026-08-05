@@ -88,7 +88,7 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
                 </div>
                 <div className="flex flex-col">
                   <span className="font-bold" style={{ fontSize: '0.85rem' }}>{user.name}</span>
-                  <span style={{ fontSize: '0.7rem', opacity: 0.6, fontFamily: 'monospace' }}>{user.walletAddress?.substring(0, 10)}...</span>
+                  <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{user.walletAddress?.substring(0, 10)}...</span>
                 </div>
               </button>
 

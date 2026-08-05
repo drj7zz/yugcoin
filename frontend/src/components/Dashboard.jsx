@@ -92,8 +92,8 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenCo
             </div>
             <div>
               <div className="font-extrabold" style={{ fontSize: '1.25rem', color: 'var(--text-main)' }}>Welcome back, {user?.name}</div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--primary)', fontFamily: 'monospace', marginTop: '0.25rem' }}>{receiveIdentifier}</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: '0.15rem' }}>Wallet ID: {user?.walletAddress}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--primary)', marginTop: '0.25rem' }}>{receiveIdentifier}</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Wallet ID: {user?.walletAddress}</div>
             </div>
           </button>
 
@@ -254,7 +254,7 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenCo
                       <div className="font-bold" style={{ fontSize: '0.95rem', color: 'var(--text-main)' }}>
                         {displayType}
                       </div>
-                      <div className="flex items-center gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                      <div className="flex items-center gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                         <span>Ref: {isSender ? (tx.destinationUsername ? `@${tx.destinationUsername}` : tx.destinationAddress?.substring(0,8) + '...') : (tx.sourceUsername ? `@${tx.sourceUsername}` : tx.sourceAddress?.substring(0,8) + '...')}</span>
                         <span>•</span>
                         <span className="flex items-center gap-1">

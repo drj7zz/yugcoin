@@ -118,7 +118,7 @@ export default function TransferModal({ wallets, onClose, onSuccess, initialDest
             <input
               type="text"
               className="liquid-input"
-              style={{ fontFamily: 'monospace' }}
+              style={{ fontFamily: 'inherit' }}
               placeholder="e.g. @alex-8f3a92 or YUG-8F3A29B"
               value={destinationAddress}
               onChange={(e) => setDestinationAddress(e.target.value.trim())}
@@ -182,7 +182,7 @@ export default function TransferModal({ wallets, onClose, onSuccess, initialDest
               type="password"
               maxLength={4}
               className="liquid-input"
-              style={{ fontFamily: 'monospace', letterSpacing: '0.2em' }}
+              style={{ fontFamily: 'inherit', letterSpacing: '0.2em' }}
               placeholder="1234"
               value={securityPin}
               onChange={(e) => setSecurityPin(e.target.value)}

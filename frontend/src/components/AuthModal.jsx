@@ -229,7 +229,7 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
                   type="password"
                   maxLength={4}
                   className="liquid-input"
-                  style={{ paddingLeft: '2.5rem', fontFamily: 'monospace', letterSpacing: '0.2em' }}
+                  style={{ paddingLeft: '2.5rem', letterSpacing: '0.2em' }}
                   placeholder="1234"
                   value={securityPin}
                   onChange={(e) => setSecurityPin(e.target.value)}

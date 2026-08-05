@@ -214,6 +214,7 @@ export default function App() {
               <div className="journey-grid">
                 <div><strong>v1.0</strong><p>Secure wallet accounts, YUG balances, transfers, and a transparent double-entry ledger.</p></div>
                 <div><strong>v1.1</strong><p>Username payments, YugCoin QR profiles, account security, payment receipts, and downloadable statements.</p></div>
+                <div><strong>v1.2.0</strong><p>Google sign-in, safer signup validation, clearer statements, responsive UI improvements, and navigation fixes.</p></div>
                 <div><strong>Upcoming</strong><p>Validated coupon rewards, payment requests, a contributor quest board, and a YUG marketplace.</p></div>
               </div>
               <p className="journey-note">Sign in to explore the complete project documentation and roadmap.</p>
