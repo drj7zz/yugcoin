@@ -1,13 +1,16 @@
 const User = require('../models/User');
 const Wallet = require('../models/Wallet');
 const Coupon = require('../models/Coupon');
+const Transaction = require('../models/Transaction');
 
 const cleanUser = (user, wallets = []) => ({ id: user._id, name: user.name, email: user.email, username: user.username, walletAddress: user.walletAddress, role: user.role, createdAt: user.createdAt, wallets });
 
 exports.getOverview = async (req, res) => {
-  const [users, activeCoupons, wallets] = await Promise.all([User.countDocuments(), Coupon.countDocuments({ status: 'ACTIVE' }), Wallet.countDocuments({ accountType: 'USER' })]);
-  res.json({ success: true, overview: { users, wallets, activeCoupons } });
+  const [users, activeCoupons, wallets, balance] = await Promise.all([User.countDocuments(), Coupon.countDocuments({ status: 'ACTIVE' }), Wallet.countDocuments({ accountType: 'USER', currency: 'YUG' }), Wallet.aggregate([{ $match: { accountType: 'USER', currency: 'YUG' } }, { $group: { _id: null, total: { $sum: '$balance' } } }])]);
+  res.json({ success: true, overview: { users, wallets, activeCoupons, yugInWallets: balance[0]?.total || 0 } });
 };
+
+exports.listTransactions = async (req, res) => res.json({ success: true, transactions: await Transaction.find({ currency: 'YUG' }).sort({ createdAt: -1 }).limit(100).lean() });
 
 exports.listUsers = async (req, res) => {
   const users = await User.find().select('-password -securityPin').sort({ createdAt: -1 }).limit(250).lean();
@@ -43,7 +46,7 @@ exports.createCoupon = async (req, res) => {
   res.status(201).json({ success: true, coupon });
 };
 exports.updateCoupon = async (req, res) => {
-  const allowed = ['description', 'expiresAt', 'status'];
+  const allowed = ['description', 'expiresAt', 'status', 'valueAmount'];
   const updates = Object.fromEntries(Object.entries(req.body).filter(([key]) => allowed.includes(key)));
   updates.updatedAt = new Date();
   const coupon = await Coupon.findByIdAndUpdate(req.params.couponId, updates, { new: true, runValidators: true });

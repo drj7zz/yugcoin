@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const couponSchema = new mongoose.Schema({
   code: { type: String, required: true, unique: true, uppercase: true, trim: true },
   valueAmount: { type: Number, required: true, min: 1 },
-  valueCurrency: { type: String, enum: ['NPR'], default: 'NPR' },
+  valueCurrency: { type: String, enum: ['YUG'], default: 'YUG' },
   description: { type: String, trim: true, default: '' },
   status: { type: String, enum: ['ACTIVE', 'DISABLED'], default: 'ACTIVE' },
   expiresAt: { type: Date, default: null },

@@ -7,6 +7,7 @@ const admin = require('./admin.controller');
 router.use(authMiddleware, requireAdmin);
 router.get('/overview', admin.getOverview);
 router.get('/users', admin.listUsers);
+router.get('/transactions', admin.listTransactions);
 router.patch('/users/:userId', admin.updateUser);
 router.patch('/wallets/:walletId', admin.updateWallet);
 router.get('/coupons', admin.listCoupons);
