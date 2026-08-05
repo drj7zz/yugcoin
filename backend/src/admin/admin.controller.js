@@ -10,7 +10,13 @@ exports.getOverview = async (req, res) => {
   res.json({ success: true, overview: { users, wallets, activeCoupons, yugInWallets: balance[0]?.total || 0 } });
 };
 
-exports.listTransactions = async (req, res) => res.json({ success: true, transactions: await Transaction.find({ currency: 'YUG' }).sort({ createdAt: -1 }).limit(100).lean() });
+exports.listTransactions = async (req, res) => {
+  const transactions = await Transaction.find({ currency: 'YUG' }).sort({ createdAt: -1 }).limit(100).lean();
+  const addresses = [...new Set(transactions.flatMap((item) => [item.sourceAddress, item.destinationAddress]))];
+  const users = await User.find({ walletAddress: { $in: addresses } }).select('walletAddress name username').lean();
+  const identities = new Map(users.map((user) => [user.walletAddress, user]));
+  res.json({ success: true, transactions: transactions.map((item) => ({ ...item, sourceName: item.sourceName || identities.get(item.sourceAddress)?.name || item.sourceAddress, destinationName: item.destinationName || identities.get(item.destinationAddress)?.name || item.destinationAddress, sourceUsername: item.sourceUsername || identities.get(item.sourceAddress)?.username || '', destinationUsername: item.destinationUsername || identities.get(item.destinationAddress)?.username || '' })) });
+};
 
 exports.listUsers = async (req, res) => {
   const users = await User.find().select('-password -securityPin').sort({ createdAt: -1 }).limit(250).lean();
