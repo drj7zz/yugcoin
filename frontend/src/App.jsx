@@ -9,10 +9,11 @@ import DepositWithdrawModal from './components/DepositWithdrawModal';
 import TransactionStatementModal from './components/TransactionStatementModal';
 import OpenSourceView from './components/OpenSourceView';
 import ProfileView from './components/ProfileView';
+import ProjectView from './components/ProjectView';
 import { api } from './services/api';
-import { Bell, Info, FolderKanban, Users, Github } from 'lucide-react';
+import { Bell, Info, FolderKanban, Users, Github, ExternalLink, Instagram, HeartHandshake } from 'lucide-react';
 
-const tabs = new Set(['dashboard', 'insights', 'open-source', 'profile']);
+const tabs = new Set(['dashboard', 'insights', 'open-source', 'profile', 'project']);
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -135,7 +136,7 @@ export default function App() {
 
   // Socket Connection
   useEffect(() => {
-    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'https://yugcoin-backend.onrender.com';
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://yugcoin-backend.onrender.com');
     const socket = io(socketUrl, { transports: ['websocket', 'polling'] });
 
     if (user?.walletAddress) {
@@ -184,7 +185,7 @@ export default function App() {
       {/* Main Content Area */}
       {isLoadingSession ? (
         <div className="session-loading glass-card animate-slide-in">Restoring your wallet session…</div>
-      ) : !user ? (
+      ) : !user && activeTab !== 'project' ? (
         <div className="flex flex-col items-center justify-center mt-8">
           <div className="glass-card landing-hero-content animate-slide-in w-full">
 
@@ -197,25 +198,25 @@ export default function App() {
               </p>
             </div>
 
-            <div className="flex justify-center gap-4 mt-8">
-              <button className="liquid-btn-primary" style={{ fontSize: '1.1rem' }} onClick={() => openAuth('register')}>
+            <div className="landing-cta mt-8">
+              <button className="liquid-btn-primary" onClick={() => openAuth('register')}>
                 Get Started Now
               </button>
-              <button className="liquid-btn-secondary" style={{ fontSize: '1.1rem' }} onClick={() => openAuth('login')}>
+              <button className="liquid-btn-secondary" onClick={() => openAuth('login')}>
                 Access Wallet
               </button>
             </div>
 
-            <section className="project-journey mt-8">
+            <section className="project-journey mt-8" id="journey">
               <div className="flex items-center justify-between gap-4" style={{ flexWrap: 'wrap' }}>
                 <div><span className="qr-receive-label">YugCoin journey</span><h2 className="font-bold" style={{ fontSize: '1.45rem', marginTop: '0.35rem' }}>A wallet built for learning, growing, and sharing.</h2></div>
                 <span className="journey-badge">Open source roadmap</span>
               </div>
               <div className="journey-grid">
-                <div><strong>v1.0</strong><p>Secure wallet accounts, YUG balances, transfers, and a transparent double-entry ledger.</p></div>
-                <div><strong>v1.1</strong><p>Username payments, YugCoin QR profiles, account security, payment receipts, and downloadable statements.</p></div>
-                <div><strong>v1.2.0</strong><p>Google sign-in, safer signup validation, clearer statements, responsive UI improvements, and navigation fixes.</p></div>
                 <div><strong>Upcoming</strong><p>Validated coupon rewards, payment requests, a contributor quest board, and a YUG marketplace.</p></div>
+                <div><strong>v1.2.0</strong><p>Google sign-in, safer signup validation, clearer statements, responsive UI improvements, and navigation fixes.</p></div>
+                <div><strong>v1.1</strong><p>Username payments, YugCoin QR profiles, account security, payment receipts, and downloadable statements.</p></div>
+                <div><strong>v1.0</strong><p>Secure wallet accounts, YUG balances, transfers, and a transparent double-entry ledger.</p></div>
               </div>
               <p className="journey-note">Sign in to explore the complete project documentation and roadmap.</p>
             </section>
@@ -237,35 +238,55 @@ export default function App() {
                 <p>Create a wallet, follow your balance, make username-based transfers, redeem future coupons, and see your activity in one approachable experience.</p>
               </section>
 
-              <section className="feature-card landing-info-card">
-                <div className="feature-icon-wrapper" style={{ background: 'rgba(34, 197, 94, 0.16)', color: '#86efac' }}>
-                  <Users size={32} />
-                </div>
+              <section className="feature-card landing-info-card" id="developers">
+                <div className="feature-icon-wrapper" style={{ background: 'rgba(34, 197, 94, 0.16)', color: '#86efac' }}><Users size={32} /></div>
                 <h2 className="font-bold" style={{ fontSize: '1.25rem' }}>Developers</h2>
-                <p>Built by people who value learning, clarity, and meaningful collaboration.</p>
+                <p>Built by people who value learning, clarity, open projects, and meaningful collaboration.</p>
                 <div className="developer-links">
-                  <a href="https://github.com/drj7zz" target="_blank" rel="noreferrer" aria-label="View drj7zz on GitHub">
-                    <Github size={16} />
-                    <span><small>GitHub</small>drj7zz</span>
-                  </a>
-                  <a href="https://github.com/coder-khushi" target="_blank" rel="noreferrer" aria-label="View coder-khushi on GitHub">
-                    <Github size={16} />
-                    <span><small>GitHub</small>coder-khushi</span>
-                  </a>
+                  <a href="https://drj7zz.vercel.app/" target="_blank" rel="noreferrer"><ExternalLink size={16} /><span><small>Portfolio</small>drj7zz.vercel.app</span></a>
+                  <a href="https://github.com/drj7zz" target="_blank" rel="noreferrer"><Github size={16} /><span><small>GitHub</small>drj7zz</span></a>
+                  <a href="https://github.com/coder-khushi" target="_blank" rel="noreferrer"><Github size={16} /><span><small>GitHub</small>coder-khushi</span></a>
                 </div>
               </section>
+
             </div>
 
-            {/* Project contact */}
-            <div className="flex flex-col items-center mt-8 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-              <p style={{ fontSize: '0.9rem', opacity: 0.6, fontWeight: 500 }}>Questions, collaboration, or project inquiries?</p>
-              <a href="mailto:giridirghraj@gmail.com" style={{ color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 600, marginTop: '4px', textDecoration: 'underline' }}>giridirghraj@gmail.com</a>
-            </div>
+            <section className="landing-connect-section mt-8" id="contact">
+              <div className="landing-connect-heading"><span className="qr-receive-label">Connect with YugCoin</span><h2 className="font-bold">Support, updates, and collaboration.</h2><p>YugCoin is made under Kaalyug, an open-project ecosystem focused on a marketplace for practical digital projects.</p></div>
+              <div className="landing-connect-grid">
+                <div className="feature-card landing-info-card landing-connect-card">
+                  <div className="feature-icon-wrapper" style={{ background: 'rgba(125, 211, 252, 0.16)', color: 'var(--primary)' }}><HeartHandshake size={30} /></div>
+                  <h3 className="font-bold">Customer support</h3>
+                  <p>Get help with YugCoin, ask a question, or start a collaboration through the Kaalyug support space.</p>
+                  <a className="landing-connect-link" href="mailto:workkaalyug@gmail.com">workkaalyug@gmail.com</a>
+                </div>
+                <div className="feature-card landing-info-card landing-connect-card">
+                  <div className="feature-icon-wrapper" style={{ background: 'rgba(249, 168, 212, 0.16)', color: '#f9a8d4' }}><Instagram size={30} /></div>
+                  <h3 className="font-bold">Updates & contact</h3>
+                  <p>Follow the Kaalyug ecosystem for updates, or reach the team directly for project-related questions.</p>
+                  <div className="landing-connect-actions"><a href="https://instagram.com/kaalyug.in" target="_blank" rel="noreferrer">@kaalyug.in</a><a href="mailto:giridirghraj@gmail.com">Email us</a></div>
+                </div>
+              </div>
+            </section>
+
+            <section className="landing-credits mt-8">
+              <div className="landing-credits-heading">
+                <div className="feature-icon-wrapper"><Users size={26} /></div>
+                <div><span className="qr-receive-label">Developers</span><h2 className="font-bold">Built by open-project contributors</h2></div>
+              </div>
+              <p>YugCoin is designed and published by Drj7zz with coder-khushi. Both contributors value practical learning, clarity, and open projects.</p>
+              <div className="credits-links">
+                <a href="https://drj7zz.vercel.com" target="_blank" rel="noreferrer"><ExternalLink size={16} /><span><small>Developer portfolio</small>drj7zz.vercel.com</span></a>
+                <a href="https://github.com/drj7zz" target="_blank" rel="noreferrer"><Github size={16} /><span><small>Developer GitHub</small>drj7zz</span></a>
+                <a href="https://github.com/coder-khushi" target="_blank" rel="noreferrer"><Github size={16} /><span><small>Developer GitHub</small>coder-khushi</span></a>
+              </div>
+            </section>
 
           </div>
         </div>
       ) : (
         <div className="w-full" style={{ flex: 1 }}>
+          {activeTab === 'project' && <ProjectView />}
           {activeTab === 'dashboard' && (
             <Dashboard
               user={user}

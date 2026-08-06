@@ -1,4 +1,6 @@
-const DEFAULT_API_BASE = 'https://yugcoin-backend.onrender.com/api';
+const DEFAULT_API_BASE = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:5000/api'
+  : 'https://yugcoin-backend.onrender.com/api';
 const API_BASE = process.env.REACT_APP_API_URL || DEFAULT_API_BASE;
 
 const getHeaders = () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Braces, CheckCircle2, Code2, Database, GitBranch, QrCode, Rocket, ShieldCheck, Terminal } from 'lucide-react';
+import { BookOpen, Braces, CheckCircle2, Code2, Database, ExternalLink, GitBranch, QrCode, Rocket, ShieldCheck, Terminal, Users } from 'lucide-react';
 
 const features = [
   'Google sign-in and signup with server-side credential verification',
@@ -63,6 +63,19 @@ export default function OpenSourceView() {
       <section className="glass-card readme-section">
         <div className="readme-heading"><CheckCircle2 size={20} /><h2>Features</h2></div>
         <ul className="readme-list">{features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
+      </section>
+
+      <section className="readme-two-column">
+        <article className="glass-card readme-section">
+          <div className="readme-heading"><Users size={20} /><h2>Developer</h2></div>
+          <p>YugCoin is designed and published by Drj7zz with coder-khushi as an educational, open project. The developer portfolio includes published projects and contact details.</p>
+          <a className="readme-external-link" href="https://drj7zz.vercel.app/" target="_blank" rel="noreferrer"><ExternalLink size={16} /> Visit drj7zz.vercel.app</a>
+          <a className="readme-external-link" href="https://github.com/coder-khushi" target="_blank" rel="noreferrer"><ExternalLink size={16} /> coder-khushi on GitHub</a>
+        </article>
+        <article className="glass-card readme-section ecosystem-card">
+          <div className="readme-heading"><Rocket size={20} /><h2>Credits</h2></div>
+          <p>Made under <strong>Kaalyug</strong>, an open-project ecosystem focused on a marketplace for practical digital projects.</p>
+        </article>
       </section>
 
       <section className="readme-two-column">

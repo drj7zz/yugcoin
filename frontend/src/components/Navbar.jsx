@@ -100,9 +100,6 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
         ) : (
           <div className="navbar-guest-actions flex items-center gap-3">
             <button className="liquid-btn-secondary flex items-center gap-2" onClick={() => onOpenAuth('login')} style={{ fontSize: '0.9rem' }}>
-              <Code2 size={16} /> Open Source
-            </button>
-            <button className="liquid-btn-secondary flex items-center gap-2" onClick={() => onOpenAuth('login')} style={{ fontSize: '0.9rem' }}>
               <LogIn size={16} /> Sign In
             </button>
             <button className="liquid-btn-primary flex items-center gap-2" onClick={() => onOpenAuth('register')} style={{ fontSize: '0.9rem' }}>
