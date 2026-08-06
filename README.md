@@ -15,7 +15,7 @@ YugCoin is an educational wallet application. It helps learners understand the b
 
 ## Features
 
-- Email/password and Google registration and sign-in
+- Email/password and ```Google registration``` and sign-in
 - Password strength validation, confirmation, and an account-email disclaimer
 - Personal YUG wallet balance dashboard
 - Fixed initial demo balance and wallet-to-wallet transfers
