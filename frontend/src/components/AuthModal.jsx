@@ -27,19 +27,26 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
   const [error, setError] = useState('');
   const googleButtonRef = useRef(null);
   const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+  const securityPinRef = useRef(securityPin);
 
   useEffect(() => {
-    if (!googleClientId || !googleButtonRef.current) return undefined;
+    securityPinRef.current = securityPin;
+  }, [securityPin]);
+
+  useEffect(() => {
+    if (!googleClientId) return undefined;
+
+    let cancelled = false;
 
     const renderGoogleButton = () => {
-      if (!window.google?.accounts?.id || !googleButtonRef.current) return;
+      if (!window.google?.accounts?.id || !googleButtonRef.current || cancelled) return;
       window.google.accounts.id.initialize({
         client_id: googleClientId,
         callback: async ({ credential }) => {
           setError('');
           setLoading(true);
           try {
-            const response = await api.googleAuth(credential, securityPin);
+            const response = await api.googleAuth(credential, securityPinRef.current);
             localStorage.setItem('yugcoin_token', response.token);
             onSuccess(response.user, response.initialTransaction);
           } catch (err) {
@@ -51,7 +58,13 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
       });
       googleButtonRef.current.innerHTML = '';
       window.google.accounts.id.renderButton(googleButtonRef.current, {
-        type: 'icon', theme: 'outline', size: 'large', shape: 'circle'
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'continue_with',
+        shape: 'rectangular',
+        logo_alignment: 'left',
+        width: Math.min(320, googleButtonRef.current.offsetWidth || 280)
       });
     };
 
@@ -59,7 +72,10 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
     if (script) {
       script.addEventListener('load', renderGoogleButton);
       renderGoogleButton();
-      return () => script.removeEventListener('load', renderGoogleButton);
+      return () => {
+        cancelled = true;
+        script.removeEventListener('load', renderGoogleButton);
+      };
     }
     const googleScript = document.createElement('script');
     googleScript.src = 'https://accounts.google.com/gsi/client';
@@ -68,8 +84,11 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
     googleScript.dataset.googleIdentity = 'true';
     googleScript.addEventListener('load', renderGoogleButton);
     document.head.appendChild(googleScript);
-    return () => googleScript.removeEventListener('load', renderGoogleButton);
-  }, [googleClientId, mode, securityPin, onSuccess]);
+    return () => {
+      cancelled = true;
+      googleScript.removeEventListener('load', renderGoogleButton);
+    };
+  }, [googleClientId, onSuccess]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -268,7 +287,15 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
         </form>
 
         <div className="auth-divider"><span>or continue with</span></div>
-        {googleClientId ? <div className="google-auth-button"><span className="google-icon-face"><GoogleMark /></span><div className="google-auth-render" ref={googleButtonRef} /></div> : <p className="google-config-notice">Google sign-in will be available after <code>REACT_APP_GOOGLE_CLIENT_ID</code> is configured.</p>}
+        {googleClientId ? (
+          <div className="google-auth-shell">
+            <div className="google-auth-button" role="button" tabIndex={0}>
+              <div className="google-auth-render" ref={googleButtonRef} />
+            </div>
+          </div>
+        ) : (
+          <p className="google-config-notice">Google sign-in will be available after <code>REACT_APP_GOOGLE_CLIENT_ID</code> is configured.</p>
+        )}
 
         <div className="flex justify-between items-center" style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
           <span>
