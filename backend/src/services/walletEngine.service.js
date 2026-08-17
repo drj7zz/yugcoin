@@ -28,6 +28,21 @@ async function getLastLedgerHash() {
 
 class WalletEngineService {
 
+  constructor() {
+    // Allows the ledger rules to be exercised without a MongoDB connection.
+    // Production requests always use the MongoDB transaction path below.
+    this.memoryStore = {
+      users: new Map(),
+      wallets: new Map(),
+      transactions: new Map(),
+      ledgerEntries: []
+    };
+  }
+
+  getMemoryStore() {
+    return this.memoryStore;
+  }
+
   normalizeUserIdVariants(userId) {
     const values = new Set();
 
@@ -87,6 +102,10 @@ class WalletEngineService {
   async processTransfer({ sourceUserId, destinationAddress, amount, currency = 'YUG', idempotencyKey, description = '' }) {
     if (!amount || amount <= 0) {
       throw new Error('Transfer amount must be greater than 0');
+    }
+
+    if (!this.isMongoActive()) {
+      return this.processMemoryTransfer({ sourceUserId, destinationAddress, amount, currency, idempotencyKey, description });
     }
 
     // 1. Idempotency Check
@@ -223,6 +242,65 @@ class WalletEngineService {
     }
   }
 
+  async processMemoryTransfer({ sourceUserId, destinationAddress, amount, currency = 'YUG', idempotencyKey, description = '' }) {
+    const store = this.memoryStore;
+    if (idempotencyKey && store.transactions.has(idempotencyKey)) {
+      return { transaction: store.transactions.get(idempotencyKey), idempotent: true };
+    }
+
+    const sourceWallet = [...store.wallets.values()].find((wallet) => String(wallet.userId) === String(sourceUserId) && wallet.currency === currency);
+    const destWallet = [...store.wallets.values()].find((wallet) => wallet.walletAddress === String(destinationAddress).trim() && wallet.currency === currency);
+    if (!sourceWallet) throw new Error(`Sender wallet not found for currency ${currency}`);
+    if (!destWallet) throw new Error(`Recipient '${String(destinationAddress).trim()}' was not found. Enter a wallet ID or @username.`);
+    if (String(sourceWallet._id) === String(destWallet._id)) throw new Error('Cannot transfer to your own wallet');
+    if (sourceWallet.status !== 'ACTIVE' || destWallet.status !== 'ACTIVE') throw new Error('A wallet is frozen or inactive');
+
+    const fee = Math.round(amount * 0.001 * 10000) / 10000;
+    const totalDeduction = amount + fee;
+    if (sourceWallet.balance < totalDeduction) throw new Error(`Insufficient funds. Required: ${totalDeduction} ${currency}, Available: ${sourceWallet.balance}`);
+
+    sourceWallet.balance -= totalDeduction;
+    destWallet.balance += amount;
+    const transactionId = `TX-${uuidv4().substring(0, 8).toUpperCase()}`;
+    const sourceUser = store.users.get(String(sourceUserId));
+    const destinationUser = [...store.users.values()].find((user) => user.walletAddress === destWallet.walletAddress);
+    const transaction = {
+      transactionId,
+      idempotencyKey: idempotencyKey || transactionId,
+      sourceWalletId: sourceWallet._id,
+      destinationWalletId: destWallet._id,
+      sourceAddress: sourceWallet.walletAddress,
+      destinationAddress: destWallet.walletAddress,
+      sourceUsername: usernameFor(sourceUser),
+      destinationUsername: usernameFor(destinationUser),
+      amount,
+      fee,
+      currency,
+      type: 'TRANSFER',
+      status: 'COMPLETED',
+      description,
+      createdAt: new Date()
+    };
+    store.transactions.set(transaction.idempotencyKey, transaction);
+
+    const timestamp = new Date();
+    let prevHash = store.ledgerEntries.length ? store.ledgerEntries[store.ledgerEntries.length - 1].entryHash : '0000000000000000000000000000000000000000000000000000000000000000';
+    const appendEntry = (wallet, type, entryAmount, balanceAfter) => {
+      const entryId = `LED-${uuidv4().substring(0, 8)}`;
+      const entryHash = calculateEntryHash(prevHash, entryId, transactionId, String(wallet._id), type, entryAmount, balanceAfter, timestamp.toISOString());
+      store.ledgerEntries.push({ entryId, transactionId, walletId: wallet._id, walletAddress: wallet.walletAddress, type, amount: entryAmount, currency, balanceAfter, prevHash, entryHash, timestamp });
+      prevHash = entryHash;
+    };
+    appendEntry(sourceWallet, 'DEBIT', totalDeduction, sourceWallet.balance);
+    appendEntry(destWallet, 'CREDIT', amount, destWallet.balance);
+    if (fee > 0) {
+      const feeWallet = { _id: `fee-${currency}`, walletAddress: `SYS-FEEPOOL-${currency}` };
+      appendEntry(feeWallet, 'CREDIT', fee, 0);
+    }
+
+    return { transaction, sourceWallet, destWallet };
+  }
+
   /**
    * Process Faucet Deposit / Top-up
    */
@@ -284,6 +362,7 @@ class WalletEngineService {
    * Ledger Audit & Chain Integrity Verifier
    */
   async verifyLedgerIntegrity() {
+    if (!this.isMongoActive()) return this.verifyMemoryLedgerIntegrity();
     const entries = await LedgerEntry.find().sort({ timestamp: 1, _id: 1 }).lean();
 
     let previousHash = '0000000000000000000000000000000000000000000000000000000000000000';
@@ -329,6 +408,23 @@ class WalletEngineService {
     };
   }
 
+  verifyMemoryLedgerIntegrity() {
+    const entries = this.memoryStore.ledgerEntries;
+    let previousHash = '0000000000000000000000000000000000000000000000000000000000000000';
+    let debitsTotal = 0;
+    let creditsTotal = 0;
+    const auditLogs = [];
+    for (let index = 0; index < entries.length; index += 1) {
+      const entry = entries[index];
+      if (entry.type === 'DEBIT') debitsTotal += entry.amount;
+      if (entry.type === 'CREDIT') creditsTotal += entry.amount;
+      const expectedHash = calculateEntryHash(entry.prevHash, entry.entryId, entry.transactionId, String(entry.walletId), entry.type, entry.amount, entry.balanceAfter, new Date(entry.timestamp).toISOString());
+      if (entry.prevHash !== previousHash || entry.entryHash !== expectedHash) auditLogs.push(`[CORRUPTED ENTRY] EntryId ${entry.entryId} hash mismatch at index ${index}`);
+      previousHash = entry.entryHash;
+    }
+    return { totalEntries: entries.length, isChainValid: auditLogs.length === 0, debitsTotal: Math.round(debitsTotal * 100) / 100, creditsTotal: Math.round(creditsTotal * 100) / 100, balanced: Math.abs(debitsTotal - creditsTotal) < 0.01, latestHash: previousHash, auditLogs };
+  }
+
   // Get User Wallets
   async getUserWallets(userId) {
     const userIdVariants = this.normalizeUserIdVariants(userId);
@@ -354,6 +450,15 @@ class WalletEngineService {
       destinationName: transaction.destinationName || identities.get(transaction.destinationAddress)?.name || '',
       destinationUsername: transaction.destinationUsername || identities.get(transaction.destinationAddress)?.username || ''
     }));
+  }
+
+  // A transaction may only be fetched through a wallet that participated in it.
+  // This keeps marketplace clients from using an ID to enumerate other users' payments.
+  async getTransactionForWallet(walletAddress, transactionId) {
+    return Transaction.findOne({
+      transactionId: String(transactionId),
+      $or: [{ sourceAddress: walletAddress }, { destinationAddress: walletAddress }]
+    }).lean();
   }
 }
 

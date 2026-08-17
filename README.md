@@ -127,6 +127,8 @@ GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 PORT=5000
 ```
 
+Use a unique `JWT_SECRET` of at least 32 characters and do not commit `backend/.env` or any real credentials. The repository ignores `.env` files and only commits non-sensitive `.env.example` templates.
+
 Install and run the API:
 
 ```bash
@@ -162,6 +164,18 @@ npm start
 ```
 
 The dashboard opens at `http://localhost:3000`.
+
+### Deploy the frontend
+
+The React frontend is ready for Vercel deployment. Import this repository in Vercel and set the **Root Directory** to `frontend`. Add these environment variables in the Vercel project settings, then deploy:
+
+```env
+REACT_APP_API_URL=https://yugcoin-backend.onrender.com/api
+REACT_APP_SOCKET_URL=https://yugcoin-backend.onrender.com
+REACT_APP_GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
+```
+
+The SPA rewrite in `frontend/vercel.json` lets direct visits to frontend routes load correctly. After Vercel provides your frontend URL, set the backend's `CORS_ORIGIN` to that exact URL and redeploy the backend.
 
 ## QR scanner notes
 
@@ -218,9 +232,28 @@ The QR scanner uses the browser's native `BarcodeDetector` API and requires came
 | `GET` | `/api/wallet/balances` | Get wallet balances |
 | `POST` | `/api/wallet/deposit` | Simulate a YUG deposit |
 | `POST` | `/api/wallet/transfer` | Send simulated YUG to another wallet |
+| `GET` | `/api/wallet/transactions` | Get transactions for the authenticated wallet |
+| `POST` | `/api/wallet/transactions` | Create an idempotent marketplace payment |
+| `GET` | `/api/wallet/transactions/:transactionId` | Get one owned transaction |
 | `GET` | `/api/wallet/history` | Get wallet transaction history |
 | `GET` | `/api/wallet/audit` | Verify ledger hash-chain integrity |
 | `GET` | `/api/health` | Check API status |
+
+### Marketplace payments
+
+Marketplace clients use the wallet API with the buyer's YugCoin JWT. Every wallet endpoint requires an `Authorization: Bearer <token>` header. Use `GET /api/wallet/balances` to show the buyer's available balances, then create a payment with `POST /api/wallet/transactions`. This route is the RESTful marketplace alias of the existing `/api/wallet/transfer` endpoint and uses the same atomic double-entry ledger.
+
+The payment body requires `destinationAddress`, `amount`, and the buyer's `securityPin`; it also accepts `currency` (`YUG` or `USD`), `description` (for example an order reference), and an `Idempotency-Key` header. Store one unique idempotency key per order-payment attempt and retry using that same key if the request times out.
+
+```bash
+curl -X POST http://localhost:5000/api/wallet/transactions \
+  -H "Authorization: Bearer <buyer-jwt>" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: order-1042-payment-1" \
+  -d '{"destinationAddress":"YUG-MERCHANT","amount":49.95,"currency":"YUG","securityPin":"1234","description":"Marketplace order #1042"}'
+```
+
+The response contains the completed transaction and an `idempotent` flag. Use `GET /api/wallet/transactions` for the authenticated wallet's payment history, or retrieve an individual payment with `GET /api/wallet/transactions/:transactionId`; the API only returns transactions involving the authenticated wallet.
 
 ## Build and verification
 

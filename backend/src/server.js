@@ -16,11 +16,13 @@ const seedData = require('./seed');
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',').map((origin) => origin.trim()).filter(Boolean);
+const corsOrigin = allowedOrigins.includes('*') ? '*' : allowedOrigins;
 
 // Socket.io for Realtime Wallet Notifications
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: corsOrigin,
     methods: ['GET', 'POST']
   }
 });
@@ -35,7 +37,7 @@ const apiLimiter = rateLimit({
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json());
 app.use('/api', apiLimiter);
 
@@ -80,6 +82,12 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 5000;
 
 async function startServer() {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    throw new Error('JWT_SECRET must be set to a random value of at least 32 characters.');
+  }
+  if (process.env.NODE_ENV === 'production' && allowedOrigins.includes('*')) {
+    throw new Error('CORS_ORIGIN must list the trusted frontend URL(s) in production.');
+  }
   await connectDB();
   const adminEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
   if (adminEmail) {
