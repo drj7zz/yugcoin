@@ -55,6 +55,15 @@ if (fs.existsSync(adminBuildPath)) {
 }
 
 // Health check endpoint
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ONLINE',
+    service: 'YugCoin Wallet Engine API',
+    health: '/api/health',
+    apiBase: '/api'
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ONLINE',

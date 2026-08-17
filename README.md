@@ -239,6 +239,8 @@ The QR scanner uses the browser's native `BarcodeDetector` API and requires came
 | `GET` | `/api/wallet/audit` | Verify ledger hash-chain integrity |
 | `GET` | `/api/health` | Check API status |
 
+Opening the backend domain itself returns a small API status response. Use `/api/health` for a health check, for example `https://yugcoin-backend.onrender.com/api/health`.
+
 ### Marketplace payments
 
 Marketplace clients use the wallet API with the buyer's YugCoin JWT. Every wallet endpoint requires an `Authorization: Bearer <token>` header. Use `GET /api/wallet/balances` to show the buyer's available balances, then create a payment with `POST /api/wallet/transactions`. This route is the RESTful marketplace alias of the existing `/api/wallet/transfer` endpoint and uses the same atomic double-entry ledger.
