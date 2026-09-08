@@ -292,6 +292,18 @@ body {
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
 }
 
+/* Banner-sized logo in the navbar — adjusted to fit the bar height */
+.navbar-logo {
+  width: 200px;
+  height: 64px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .navbar-logo { width: 140px; height: 52px; }
+}
+
 /* ===== Flat guest nav links (landing page, no button style) ===== */
 .navbar-guest-flat { align-items: center; }
 .navbar-flat-link {
