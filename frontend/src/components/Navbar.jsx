@@ -1,113 +1,128 @@
-import React from 'react';
-import { Wallet, BarChart2, LogOut, LogIn, UserPlus, RefreshCw, User, Code2 } from 'lucide-react';
-import backgroundImage from '../assets/bg.jpeg';
+import React, { useState, useRef, useEffect } from 'react';
+import { LayoutDashboard, UserRound, LogOut, LogIn, UserPlus, RefreshCw, ChevronDown } from 'lucide-react';
+import logo from '../assets/logo.webp';
+import LogoBannerWeb from './LogoBannerWeb';
+import LogoBannerMobile from './LogoBannerMobile';
+
+const NAV_ITEMS = [
+  { id: 'dashboard', label: 'Wallet', icon: LayoutDashboard },
+  { id: 'profile', label: 'Profile', icon: UserRound },
+];
+
+function BrandMark() {
+  return (
+    <div className="navbar-brand flex items-center gap-2" style={{ cursor: 'pointer', background: 'transparent', border: 'none' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+      <img src={logo} alt="YugCoin logo" className="logo-transparent" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+    </div>
+  );
+}
+
+function TabButton({ item, activeTab, setActiveTab }) {
+  const Icon = item.icon;
+  return (
+    <button className="navbar-tab" data-active={activeTab === item.id} onClick={() => setActiveTab(item.id)}>
+      <Icon size={17} />
+      <span>{item.label}</span>
+    </button>
+  );
+}
 
 export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLogout, onRefresh }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const close = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
+  const initial = (user?.name || 'U').charAt(0).toUpperCase();
+
   return (
-    <nav className="glass-card app-navbar">
-      <div className="navbar-brand flex items-center gap-4" style={{ cursor: 'pointer' }}>
-        <div style={{ width: '40px', height: '40px', borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-          <img src={backgroundImage} alt="YugCoin" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: '62% 62%', display: 'block' }} />
-        </div>
-        <div className="flex flex-col">
-          <span className="font-extrabold text-gradient" style={{ fontSize: '1.25rem', lineHeight: '1.2' }}>YugCoin</span>
-          <span style={{ fontSize: '0.75rem', opacity: 0.7, letterSpacing: '0.05em' }}>WALLET</span>
-        </div>
-      </div>
+    <>
+      <LogoBannerWeb />
+      <LogoBannerMobile />
+      <nav className="glass-card app-navbar">
+        <BrandMark />
 
-      <div className="navbar-content">
-        {user ? (
-          <>
-            <div className="navbar-tabs flex items-center gap-2" style={{ background: 'rgba(0,0,0,0.05)', padding: '0.25rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <button
-                className="liquid-btn-secondary"
-                style={{
-                  padding: '0.5rem 1rem',
-                  border: 'none',
-                  background: activeTab === 'dashboard' ? 'rgba(255,255,255,0.2)' : 'transparent',
-                  color: activeTab === 'dashboard' ? 'var(--text-main)' : 'var(--text-muted)'
-                }}
-                onClick={() => setActiveTab('dashboard')}
-              >
-                <div className="flex items-center gap-2">
-                  <Wallet size={16} /> <span style={{ fontSize: '0.9rem' }}>Dashboard</span>
+        <div className="navbar-content">
+          {user ? (
+            <>
+              <div className="navbar-tabs">
+                {NAV_ITEMS.map(item => (
+                  <TabButton key={item.id} item={item} activeTab={activeTab} setActiveTab={setActiveTab} />
+                ))}
+              </div>
+
+              <div className="navbar-actions" style={{ gap: '0.6rem' }}>
+                <button
+                  onClick={onRefresh}
+                  className="liquid-btn-secondary flex items-center justify-center"
+                  title="Refresh balance"
+                  style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}
+                >
+                  <RefreshCw size={16} />
+                </button>
+
+                <div className="profile-menu" ref={menuRef} style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    className="navbar-user profile-nav-trigger flex items-center gap-2"
+                    onClick={() => setMenuOpen(o => !o)}
+                    style={{ background: 'transparent' }}
+                  >
+                    <div className="flex items-center justify-center font-bold" style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--primary)', color: '#fff' }}>
+                      {initial}
+                    </div>
+                    <div className="flex flex-col" style={{ lineHeight: 1.2, alignItems: 'flex-start' }}>
+                      <span className="font-bold" style={{ fontSize: '0.82rem' }}>{user.name}</span>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{user.email}</span>
+                    </div>
+                    <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
+                  </button>
+
+                  {menuOpen && (
+                    <div className="profile-dropdown animate-slide-in" role="menu">
+                      <div className="profile-dropdown-head flex flex-col" style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)' }}>
+                        <strong style={{ fontSize: '0.9rem' }}>{user.name}</strong>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user.email}</span>
+                      </div>
+                      <button type="button" className="profile-dropdown-item flex items-center gap-2" onClick={() => { setMenuOpen(false); setActiveTab('profile'); }}>
+                        <UserRound size={15} /> Profile & Security
+                      </button>
+                      <button type="button" className="profile-dropdown-item flex items-center gap-2" onClick={onRefresh}>
+                        <RefreshCw size={15} /> Refresh Balance
+                      </button>
+                      <button type="button" className="profile-dropdown-item flex items-center gap-2" onClick={() => { setMenuOpen(false); onLogout(); }} style={{ color: 'var(--danger)' }}>
+                        <LogOut size={15} /> Log out
+                      </button>
+                    </div>
+                  )}
                 </div>
+              </div>
+            </>
+          ) : (
+            <div className="navbar-guest-actions" style={{ gap: '0.6rem' }}>
+              <button className="liquid-btn-secondary flex items-center gap-2" onClick={() => onOpenAuth('login')} style={{ fontSize: '0.88rem' }}>
+                <LogIn size={16} /> Sign In
               </button>
-              <button
-                className="liquid-btn-secondary"
-                style={{
-                  padding: '0.5rem 1rem',
-                  border: 'none',
-                  background: activeTab === 'insights' ? 'rgba(255,255,255,0.2)' : 'transparent',
-                  color: activeTab === 'insights' ? 'var(--text-main)' : 'var(--text-muted)'
-                }}
-                onClick={() => setActiveTab('insights')}
-              >
-                <div className="flex items-center gap-2">
-                  <BarChart2 size={16} /> <span style={{ fontSize: '0.9rem' }}>Insights</span>
-                </div>
-              </button>
-              <button
-                className="liquid-btn-secondary"
-                style={{
-                  padding: '0.5rem 1rem',
-                  border: 'none',
-                  background: activeTab === 'open-source' ? 'rgba(255,255,255,0.2)' : 'transparent',
-                  color: activeTab === 'open-source' ? 'var(--text-main)' : 'var(--text-muted)'
-                }}
-                onClick={() => setActiveTab('open-source')}
-              >
-                <div className="flex items-center gap-2"><Code2 size={16} /> <span style={{ fontSize: '0.9rem' }}>Open Source</span></div>
-              </button>
-              <button
-                className="liquid-btn-secondary"
-                style={{
-                  padding: '0.5rem 1rem', border: 'none',
-                  background: activeTab === 'profile' ? 'rgba(255,255,255,0.2)' : 'transparent',
-                  color: activeTab === 'profile' ? 'var(--text-main)' : 'var(--text-muted)'
-                }}
-                onClick={() => setActiveTab('profile')}
-              >
-                <div className="flex items-center gap-2"><User size={16} /> <span style={{ fontSize: '0.9rem' }}>Profile</span></div>
+              <button className="liquid-btn-primary flex items-center gap-2" onClick={() => onOpenAuth('register')} style={{ fontSize: '0.88rem' }}>
+                <UserPlus size={16} /> Open Wallet
               </button>
             </div>
+          )}
+        </div>
+      </nav>
 
-            <div className="navbar-actions flex items-center gap-4">
-              <button
-                onClick={onRefresh}
-                className="liquid-btn-secondary flex items-center justify-center"
-                title="Refresh Balance"
-                style={{ padding: '0.5rem', borderRadius: '50%', border: 'none' }}
-              >
-                <RefreshCw size={18} />
-              </button>
-
-              <button type="button" className="navbar-user profile-nav-trigger flex items-center gap-3" onClick={() => setActiveTab('profile')} title="Open profile and security settings">
-                <div className="flex items-center justify-center" style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: 'var(--text-main)' }}>
-                  <User size={18} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold" style={{ fontSize: '0.85rem' }}>{user.name}</span>
-                  <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{user.walletAddress?.substring(0, 10)}...</span>
-                </div>
-              </button>
-
-              <button className="liquid-btn-secondary flex items-center justify-center" onClick={onLogout} style={{ padding: '0.5rem', borderRadius: '0.5rem', border: 'none', color: '#f43f5e', background: 'rgba(244, 63, 94, 0.1)' }} title="Sign Out">
-                <LogOut size={16} />
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="navbar-guest-actions flex items-center gap-3">
-            <button className="liquid-btn-secondary flex items-center gap-2" onClick={() => onOpenAuth('login')} style={{ fontSize: '0.9rem' }}>
-              <LogIn size={16} /> Sign In
-            </button>
-            <button className="liquid-btn-primary flex items-center gap-2" onClick={() => onOpenAuth('register')} style={{ fontSize: '0.9rem' }}>
-              <UserPlus size={16} /> Open Wallet
-            </button>
-          </div>
-        )}
-      </div>
-    </nav>
+      {/* Mobile bottom navigation */}
+      {user && (
+        <nav className="bottom-nav">
+          {NAV_ITEMS.map(item => (
+            <TabButton key={item.id} item={item} activeTab={activeTab} setActiveTab={setActiveTab} />
+          ))}
+        </nav>
+      )}
+    </>
   );
 }
