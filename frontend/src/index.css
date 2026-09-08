@@ -759,6 +759,16 @@ body {
   text-align: center;
 }
 
+.landing-hero-logo {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+}
+
+@media (max-width: 768px) {
+  .landing-hero-logo { width: 104px; height: 104px; }
+}
+
 .landing-cta { display: flex; justify-content: center; gap: 1rem; }
 .landing-cta button { font-size: 1.1rem; }
 

@@ -247,6 +247,11 @@ function LandingPage({ onOpenAuth }) {
     <div className="flex flex-col items-center justify-center" style={{ minHeight: 'calc(100vh - 9rem)' }}>
       <div className="landing-hero-content animate-slide-in w-full">
         <div className="flex flex-col items-center gap-4">
+          <img
+            src={logo}
+            alt="YugCoin logo"
+            className="logo-transparent landing-hero-logo"
+          />
           <h1 className="hero-title" style={{ fontSize: '3.2rem', lineHeight: 1.12 }}>
             Money, made simple.
           </h1>
