@@ -9,8 +9,8 @@ const NAV_ITEMS = [
 
 function BrandMark() {
   return (
-    <div className="navbar-brand flex items-center gap-2" style={{ cursor: 'pointer', background: 'transparent', border: 'none' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-      <img src={logo} alt="YugCoin logo" className="logo-transparent navbar-logo" />
+    <div className="navbar-brand flex items-center" style={{ cursor: 'pointer', background: 'transparent', border: 'none' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+      <span className="navbar-brand-text">YugCoin</span>
     </div>
   );
 }

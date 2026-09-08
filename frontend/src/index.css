@@ -292,16 +292,20 @@ body {
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
 }
 
-/* Banner-sized logo in the navbar — adjusted to fit the bar height */
-.navbar-logo {
-  width: 200px;
-  height: 64px;
-  object-fit: contain;
-  flex-shrink: 0;
+/* Dotted text wordmark — no custom font, system rendering */
+.navbar-brand-text {
+  font-weight: 800;
+  font-size: 1.7rem;
+  letter-spacing: 0.03em;
+  color: var(--text-main);
+  text-decoration: underline dotted;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 6px;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
-  .navbar-logo { width: 140px; height: 52px; }
+  .navbar-brand-text { font-size: 1.3rem; }
 }
 
 /* ===== Flat guest nav links (landing page, no button style) ===== */
