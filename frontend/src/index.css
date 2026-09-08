@@ -185,12 +185,8 @@ body {
 .password-requirements { color: var(--text-muted); font-size: 0.74rem; line-height: 1.3; }
 .auth-divider { display: flex; align-items: center; gap: 0.75rem; margin: 1.1rem 0 0.8rem; color: var(--text-muted); font-size: 0.78rem; }
 .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-soft); }
-.google-auth-shell { display: flex; justify-content: center; align-items: center; width: 100%; }
-.google-auth-button { display: flex; align-items: center; justify-content: center; width: min(100%, 320px); min-height: 44px; margin: 0 auto; padding: 0.15rem; border: 1px solid rgba(15, 23, 42, 0.14); border-radius: 999px; background: #ffffff; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16); transition: transform 0.2s ease, box-shadow 0.2s ease; }
-.google-auth-button:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22); }
 .google-auth-render { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; }
-.google-auth-render > div { display: flex !important; align-items: center !important; justify-content: center !important; }
-.google-auth-render iframe { max-width: 100%; border-radius: 999px; }
+.google-auth-render iframe { max-width: 100%; }
 .google-config-notice { color: var(--text-muted); font-size: 0.75rem; text-align: center; }
 
 
@@ -296,48 +292,20 @@ body {
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
 }
 
-/* ===== Big banner-style logo ===== */
-.logo-banner-web,
-.logo-banner-mobile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  overflow: hidden;
+/* ===== Flat guest nav links (landing page, no button style) ===== */
+.navbar-guest-flat { align-items: center; }
+.navbar-flat-link {
+  background: none;
+  border: none;
+  padding: 0.35rem 0.25rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
 }
-
-.logo-banner-img {
-  width: 100%;
-  max-width: 640px;
-  height: auto;
-  max-height: 180px;
-  object-fit: contain;
-  transition: transform 0.25s ease;
-}
-
-.logo-banner-web:hover .logo-banner-img,
-.logo-banner-mobile:active .logo-banner-img {
-  transform: scale(1.03);
-}
-
-/* Web banner: visible only on desktop */
-.logo-banner-mobile { display: none; }
-
-@media (min-width: 769px) {
-  .logo-banner-web { display: flex; }
-  .logo-banner-mobile { display: none; }
-}
-
-/* Mobile banner: visible only on small screens, full-width */
-@media (max-width: 768px) {
-  .logo-banner-web { display: none; }
-  .logo-banner-mobile { display: flex; }
-  .logo-banner-img {
-    max-width: 100%;
-    max-height: 110px;
-  }
-}
+.navbar-flat-link:hover { color: var(--text-main); }
+.navbar-flat-link-strong { color: var(--primary); }
+.navbar-flat-link-strong:hover { color: var(--primary-hover); }
 
 /* Profile dropdown */
 .profile-dropdown {

@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LayoutDashboard, UserRound, LogOut, LogIn, UserPlus, RefreshCw, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, UserRound, LogOut, RefreshCw, ChevronDown } from 'lucide-react';
 import logo from '../assets/logo.webp';
-import LogoBannerWeb from './LogoBannerWeb';
-import LogoBannerMobile from './LogoBannerMobile';
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Wallet', icon: LayoutDashboard },
@@ -41,8 +39,6 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
 
   return (
     <>
-      <LogoBannerWeb />
-      <LogoBannerMobile />
       <nav className="glass-card app-navbar">
         <BrandMark />
 
@@ -103,12 +99,12 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
               </div>
             </>
           ) : (
-            <div className="navbar-guest-actions" style={{ gap: '0.6rem' }}>
-              <button className="liquid-btn-secondary flex items-center gap-2" onClick={() => onOpenAuth('login')} style={{ fontSize: '0.88rem' }}>
-                <LogIn size={16} /> Sign In
+            <div className="navbar-guest-actions navbar-guest-flat" style={{ gap: '0.6rem' }}>
+              <button className="navbar-flat-link" onClick={() => onOpenAuth('login')} style={{ fontSize: '0.88rem' }}>
+                Sign In
               </button>
-              <button className="liquid-btn-primary flex items-center gap-2" onClick={() => onOpenAuth('register')} style={{ fontSize: '0.88rem' }}>
-                <UserPlus size={16} /> Open Wallet
+              <button className="navbar-flat-link navbar-flat-link-strong" onClick={() => onOpenAuth('register')} style={{ fontSize: '0.88rem' }}>
+                Open Wallet
               </button>
             </div>
           )}

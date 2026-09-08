@@ -2,17 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { X, Lock, Mail, User, Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
 
-function GoogleMark() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path fill="#4285F4" d="M21.6 12.23c0-.72-.06-1.23-.2-1.76H12v3.43h5.52c-.11.85-.73 2.13-2.1 2.99l-.02.11 3.06 2.37.21.02c1.93-1.78 2.93-4.4 2.93-7.16Z" />
-      <path fill="#34A853" d="M12 22c2.7 0 4.96-.89 6.62-2.42l-3.15-2.5c-.84.59-1.97 1-3.47 1a5.99 5.99 0 0 1-5.67-4.14l-.1.01-3.18 2.46-.03.1A10 10 0 0 0 12 22Z" />
-      <path fill="#FBBC05" d="M6.33 13.94A6.04 6.04 0 0 1 6 12c0-.67.12-1.32.32-1.94v-.12L3.1 7.44l-.1.05A10 10 0 0 0 2 12c0 1.62.39 3.16 1 4.5l3.33-2.56Z" />
-      <path fill="#EA4335" d="M12 5.83c1.9 0 3.18.82 3.91 1.5l2.85-2.78C16.95 2.87 14.7 2 12 2a10 10 0 0 0-9 5.5l3.32 2.56A6 6 0 0 1 12 5.83Z" />
-    </svg>
-  );
-}
-
 export default function AuthModal({ initialMode = 'login', onClose, onSuccess, onModeSwitch }) {
   const switchMode = (next) => {
     if (onModeSwitch) onModeSwitch(next);
@@ -292,11 +281,7 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess, o
 
         <div className="auth-divider"><span>or continue with</span></div>
         {googleClientId ? (
-          <div className="google-auth-shell">
-            <div className="google-auth-button" role="button" tabIndex={0}>
-              <div className="google-auth-render" ref={googleButtonRef} />
-            </div>
-          </div>
+          <div className="google-auth-render" ref={googleButtonRef} />
         ) : (
           <p className="google-config-notice">Google sign-in will be available after <code>REACT_APP_GOOGLE_CLIENT_ID</code> is configured.</p>
         )}
