@@ -1,5 +1,5 @@
 const DEFAULT_API_BASE = process.env.NODE_ENV === 'development'
-  ? 'http://localhost:5000/api'
+  ? '/api' // dev: same-origin via CRA proxy (setupProxy.js) to avoid CORS
   : 'https://yugcoin-backend.onrender.com/api';
 const API_BASE = process.env.REACT_APP_API_URL || DEFAULT_API_BASE;
 
@@ -27,6 +27,20 @@ const handleResponse = async (res) => {
   }
 };
 
+const request = async (url, options = {}) => {
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch (networkErr) {
+    throw new Error('Network error: could not reach the YugCoin backend. Check your connection or the API URL.');
+  }
+  return handleResponse(res);
+};
+
+export const SOCKET_URL = process.env.NODE_ENV === 'development'
+  ? window.location.origin // dev: proxied via setupProxy.js
+  : 'https://yugcoin-backend.onrender.com';
+
 export const api = {
   // Auth
   login: async (email, password) => {
@@ -37,7 +51,6 @@ export const api = {
     });
     return handleResponse(res);
   },
-
   register: async (userData) => {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',

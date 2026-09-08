@@ -13,7 +13,11 @@ function GoogleMark() {
   );
 }
 
-export default function AuthModal({ initialMode = 'login', onClose, onSuccess }) {
+export default function AuthModal({ initialMode = 'login', onClose, onSuccess, onModeSwitch }) {
+  const switchMode = (next) => {
+    if (onModeSwitch) onModeSwitch(next);
+    else { setMode(next); setError(''); setPassword(''); setConfirmPassword(''); setShowConfirmPassword(false); }
+  };
   const [mode, setMode] = useState(initialMode);
   const [name, setName] = useState('');
   const [email, setEmail] = useState(() => localStorage.getItem('yugcoin_remembered_email') || '');
@@ -302,7 +306,7 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess })
             {mode === 'login' ? "New to Yugcoin?" : "Already have a wallet?"}
           </span>
           <button
-            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); setPassword(''); setConfirmPassword(''); setShowConfirmPassword(false); }}
+            onClick={switchMode}
             style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 700 }}
           >
             {mode === 'login' ? 'Create Wallet' : 'Sign In'}

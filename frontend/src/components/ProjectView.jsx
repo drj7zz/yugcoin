@@ -32,8 +32,8 @@ export default function ProjectView() {
       </section>
 
       <section className="glass-card project-page-card">
-        <div className="project-page-heading"><HeartHandshake size={20} /><h2>Support & updates</h2></div>
-        <p>For customer support, collaboration, or project updates, use the official channels below.</p>
+        <div className="project-page-heading"><HeartHandshake size={20} /><h2>Support & contact</h2></div>
+        <p>For customer support or collaboration, use the official channels below.</p>
         <div className="project-page-links project-page-contact-links">
           <a href="https://workkaalyug.com" target="_blank" rel="noreferrer"><HeartHandshake size={16} /> workkaalyug.com</a>
           <a href="https://instagram.com/kaalyug.in" target="_blank" rel="noreferrer"><Instagram size={16} /> @kaalyug.in</a>

@@ -1,65 +1,48 @@
-import React, { useEffect, useState } from 'react';
-import { Send, Ticket, Copy, Check, BarChart2, ArrowDownRight, ArrowUpRight, Clock, User, QrCode, ScanLine, Download, ReceiptText, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Send, Ticket, Copy, Check, ArrowDownRight, ArrowUpRight, Clock, QrCode, ScanLine, Download, X, Eye, EyeOff } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import WalletQrScanner from './WalletQrScanner';
 import TransactionStatementModal from './TransactionStatementModal';
+import { money } from '../utils/format';
+import { SkeletonBalance, SkeletonTxList } from './Skeleton';
 
-export default function Dashboard({ user, wallets, history, onOpenSend, onOpenCoupon, onNavigateInsights, onNavigateProfile, onScanRecipient, onRedoPayment }) {
+export default function Dashboard({ user, wallets, history, loading, onOpenSend, onOpenCoupon, onScanRecipient, onRedoPayment }) {
   const [copied, setCopied] = useState(false);
-  const [showQR, setShowQR] = useState(false);
-  const [showScanner, setShowScanner] = useState(false);
+  const [footerView, setFooterView] = useState(null); // null | 'qr' | 'scan'
   const [statementTransaction, setStatementTransaction] = useState(null);
+  const [hideBalance, setHideBalance] = useState(false);
 
-  const openOverlay = (overlay) => window.history.pushState({ ...window.history.state, yugcoinTab: 'dashboard', yugcoinOverlay: overlay }, '', window.location.href);
-  const clearOverlay = () => {
-    if (window.history.state?.yugcoinOverlay) window.history.replaceState({ ...window.history.state, yugcoinOverlay: null }, '', window.location.href);
-  };
-  const closeDashboardOverlay = () => { clearOverlay(); setShowQR(false); setShowScanner(false); setStatementTransaction(null); };
-  const openStatement = (transaction) => { openOverlay('statement'); setStatementTransaction(transaction); };
-
-  useEffect(() => {
-    const closeOnBack = () => closeDashboardOverlay();
-    window.addEventListener('popstate', closeOnBack);
-    window.addEventListener('yugcoin:close-overlay', closeOnBack);
-    return () => {
-      window.removeEventListener('popstate', closeOnBack);
-      window.removeEventListener('yugcoin:close-overlay', closeOnBack);
-    };
-  }, []);
+  const closeFooter = () => setFooterView(null);
+  const openStatement = (tx) => setStatementTransaction(tx);
 
   const downloadQr = () => {
     const svg = document.querySelector('.qr-code-frame svg');
     if (!svg) return;
-
     const image = new Image();
     const serialized = new XMLSerializer().serializeToString(svg);
     image.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = 720;
-      canvas.height = 850;
+      canvas.height = 800;
       const context = canvas.getContext('2d');
-      context.fillStyle = '#f8fafc';
+      context.fillStyle = '#ffffff';
       context.fillRect(0, 0, canvas.width, canvas.height);
-      context.fillStyle = '#0f172a';
-      context.font = '700 42px Arial, sans-serif';
+      context.fillStyle = '#101215';
+      context.font = '700 40px Arial, sans-serif';
       context.textAlign = 'center';
       context.fillText('YugCoin', canvas.width / 2, 64);
-      context.fillStyle = '#475569';
+      context.fillStyle = '#8a919b';
       context.font = '500 20px Arial, sans-serif';
       context.fillText('Scan to send YUG', canvas.width / 2, 98);
-      context.drawImage(image, 150, 130, 420, 420);
-      const rows = [receiveIdentifier, user?.name || '—', user?.walletAddress || '—'];
-      rows.forEach((row, index) => {
-        context.fillStyle = index === 0 ? '#0369a1' : '#334155';
-        context.font = index === 0 ? '700 25px Arial, sans-serif' : '500 19px monospace';
-        context.fillText(row, canvas.width / 2, 620 + (index * 54));
-      });
-      context.fillStyle = '#64748b';
-      context.font = '500 16px Arial, sans-serif';
-      context.fillText('YugCoin payment profile', canvas.width / 2, 800);
-
+      context.drawImage(image, 160, 130, 400, 400);
+      context.fillStyle = '#101215';
+      context.font = '700 26px Arial, sans-serif';
+      context.fillText(receiveIdentifier, canvas.width / 2, 610);
+      context.fillStyle = '#8a919b';
+      context.font = '500 18px monospace';
+      context.fillText(user?.name || '—', canvas.width / 2, 660);
       const link = document.createElement('a');
-      link.download = `yugcoin-wallet-${user?.walletAddress || 'qr'}.jpeg`;
+      link.download = `yugcoin-receive-${username || 'qr'}.jpeg`;
       link.href = canvas.toDataURL('image/jpeg', 0.95);
       link.click();
     };
@@ -71,6 +54,11 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenCo
   const receiveIdentifier = username ? `@${username}` : user?.walletAddress || 'N/A';
   const qrPaymentPayload = `YUGCOIN|${username}|${encodeURIComponent(user?.name || '')}|${user?.walletAddress || ''}`;
 
+  // Only the user's own movements — a wallet shows your money, not the ledger.
+  const myHistory = (history || []).filter(tx =>
+    tx.sourceAddress === user?.walletAddress || tx.destinationAddress === user?.walletAddress
+  );
+
   const handleCopy = () => {
     if (user?.walletAddress) {
       navigator.clipboard.writeText(receiveIdentifier);
@@ -80,210 +68,189 @@ export default function Dashboard({ user, wallets, history, onOpenSend, onOpenCo
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full animate-slide-in">
+    <div className="flex flex-col page-enter w-full" style={{ paddingTop: '0.5rem' }}>
 
-      {/* Account Overview Header */}
-      <div className="glass-card" style={{ padding: '2rem' }}>
-
-        <div className="flex justify-between items-center" style={{ flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
-          <button type="button" className="dashboard-profile-trigger flex items-center gap-4" onClick={onNavigateProfile} title="Open profile and security settings">
-            <div className="flex items-center justify-center" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'var(--text-main)' }}>
-              <User size={28} />
-            </div>
-            <div>
-              <div className="font-extrabold" style={{ fontSize: '1.25rem', color: 'var(--text-main)' }}>Welcome back, {user?.name}</div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--primary)', marginTop: '0.25rem' }}>{receiveIdentifier}</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>Wallet ID: {user?.walletAddress}</div>
-            </div>
+      {/* Balance */}
+      <section className="flat-section" style={{ paddingTop: '1.25rem' }}>
+        <div className="flex items-center justify-between">
+          <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            Available balance
+          </span>
+          <button
+            type="button"
+            onClick={() => setHideBalance(v => !v)}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}
+            title={hideBalance ? 'Show balance' : 'Hide balance'}
+          >
+            {hideBalance ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                if (showQR) closeDashboardOverlay();
-                else { openOverlay('qr'); setShowQR(true); setShowScanner(false); }
-              }}
-              className="liquid-btn-secondary flex items-center justify-center gap-2"
-              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-            >
-              <QrCode size={16} /> Show QR
-            </button>
-            <button
-              onClick={() => {
-                if (showScanner) closeDashboardOverlay();
-                else { openOverlay('scanner'); setShowScanner(true); setShowQR(false); }
-              }}
-              className="liquid-btn-secondary flex items-center justify-center gap-2"
-              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-            >
-              <ScanLine size={16} /> Scan QR
-            </button>
-            <button
-              onClick={handleCopy}
-              className="liquid-btn-primary flex items-center justify-center gap-2"
-              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', background: copied ? '#10b981' : undefined }}
-            >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-              {copied ? 'Copied' : 'Copy Username'}
-            </button>
-          </div>
         </div>
+        {loading ? (
+          <div style={{ marginTop: '0.75rem' }}><SkeletonBalance /></div>
+        ) : (
+          <div className="flex items-baseline" style={{ gap: '0.5rem', marginTop: '0.35rem', lineHeight: 1 }}>
+            <span className="font-extrabold" style={{ fontSize: '3rem', letterSpacing: '-0.02em' }}>
+              {hideBalance ? '••••' : money(activeWallet.balance)}
+            </span>
+            <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)', fontWeight: 700 }}>YUG</span>
+          </div>
+        )}
+        <div style={{ fontSize: '0.85rem', color: 'var(--primary)', marginTop: '0.6rem', fontWeight: 600 }}>{receiveIdentifier}</div>
+      </section>
 
-        {/* Conditional QR Code Display */}
-        {showQR && (
-          <div className="qr-receive-card animate-slide-in">
+      {/* Actions row — directly under the top nav */}
+      <section className="flat-section" style={{ marginTop: '1.5rem' }}>
+        <div className="flex" style={{ gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button className="liquid-btn-primary flex items-center justify-center gap-2" onClick={onOpenSend} style={{ padding: '0.85rem 1.5rem', flex: 1, minWidth: 140 }}>
+            <Send size={18} /> Send
+          </button>
+          <button
+            className="liquid-btn-secondary flex items-center justify-center gap-2"
+            onClick={() => setFooterView(footerView === 'qr' ? null : 'qr')}
+            style={{ padding: '0.85rem 1.5rem', flex: 1, minWidth: 140 }}
+          >
+            <QrCode size={18} /> Receive
+          </button>
+          <button className="liquid-btn-secondary flex items-center justify-center gap-2" onClick={onOpenCoupon} style={{ padding: '0.85rem 1.5rem', flex: 1, minWidth: 140 }}>
+            <Ticket size={18} /> Redeem
+          </button>
+        </div>
+      </section>
+
+      {/* Receive panel (also toggled from footer) */}
+      {footerView === 'qr' && (
+        <section className="flat-section animate-slide-in" style={{ marginTop: '1.5rem' }}>
+          <div className="qr-receive-card" style={{ marginBottom: 0 }}>
             <div className="qr-receive-copy">
               <div className="flex justify-between items-center w-full">
                 <span className="qr-receive-label">Receive YUG</span>
-                <button type="button" className="scanner-close" onClick={closeDashboardOverlay} aria-label="Close QR code"><X size={16} /></button>
+                <button type="button" className="scanner-close" onClick={closeFooter} aria-label="Close QR code"><X size={16} /></button>
               </div>
-              <strong>Scan to receive assets</strong>
-              <p>Share your username QR to receive funds without exposing your wallet ID.</p>
+              <strong>Scan to pay me</strong>
+              <p>Share your code to receive funds without exposing your wallet ID.</p>
               <button type="button" className="scan-address-button" onClick={downloadQr}>
-                <Download size={15} /> Download JPEG
+                <Download size={15} /> Download
               </button>
             </div>
             <div className="qr-receive-visual">
               <div className="qr-code-frame">
-                <QRCodeSVG value={qrPaymentPayload} size={180} fgColor="#111827" bgColor="#ffffff" level="M" includeMargin />
+                <QRCodeSVG value={qrPaymentPayload} size={170} fgColor="#111827" bgColor="#ffffff" level="M" includeMargin />
               </div>
               <div className="qr-identity-details">
                 <p>{receiveIdentifier}</p>
                 <p>{user?.name || '—'}</p>
-                <p>{user?.walletAddress || '—'}</p>
               </div>
             </div>
           </div>
-        )}
+        </section>
+      )}
 
-        {showScanner && (
-          <div style={{ marginBottom: '2rem' }}>
-            <WalletQrScanner
-              onClose={closeDashboardOverlay}
-              onScan={(address) => {
-                closeDashboardOverlay();
-                onScanRecipient(address);
-              }}
-            />
-          </div>
-        )}
+      {/* Scanner panel (also toggled from footer) */}
+      {footerView === 'scan' && (
+        <section className="flat-section animate-slide-in" style={{ marginTop: '1.5rem' }}>
+          <WalletQrScanner
+            onClose={closeFooter}
+            onScan={(address) => {
+              closeFooter();
+              onScanRecipient(address);
+            }}
+          />
+        </section>
+      )}
 
-        {/* Balance Display */}
-        <div style={{ marginBottom: '2rem' }}>
-          <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', fontWeight: 600 }}>
-            Total Liquid Balance
-          </div>
-          <div className="font-extrabold text-gradient" style={{ fontSize: '3.5rem', letterSpacing: '-0.02em', display: 'flex', alignItems: 'baseline', gap: '0.5rem', lineHeight: 1 }}>
-            <span>{activeWallet.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            <span style={{ fontSize: '1.5rem', color: 'var(--text-main)', opacity: 0.8 }}>YUG</span>
-          </div>
-        </div>
+      <hr className="section-divider" style={{ marginTop: '2rem' }} />
 
-        {/* Quick Action Buttons */}
-        <div className="grid-cols-3">
-          <button className="liquid-btn-primary flex items-center justify-center gap-2" onClick={onOpenSend} style={{ padding: '1rem' }}>
-            <Send size={18} /> Send Funds
-          </button>
+      {/* Activity — own transactions only */}
+      <section className="flat-section">
+        <h3 className="font-bold" style={{ fontSize: '1.05rem', marginBottom: '1.1rem' }}>Activity</h3>
 
-          <button className="liquid-btn-secondary flex items-center justify-center gap-2" onClick={onOpenCoupon} style={{ padding: '1rem' }}>
-            <Ticket size={18} color="#f9a8d4" /> Redeem Coupon
-          </button>
-
-          <button className="liquid-btn-secondary flex items-center justify-center gap-2" onClick={onNavigateInsights} style={{ padding: '1rem' }}>
-            <BarChart2 size={18} color="var(--primary)" /> View Insights
-          </button>
-        </div>
-
-      </div>
-
-      {/* Transaction Activity Journal */}
-      <div className="glass-card" style={{ padding: '2rem' }}>
-        <div className="flex justify-between items-center" style={{ marginBottom: '1.5rem' }}>
-          <h3 className="font-bold" style={{ fontSize: '1.2rem', color: 'var(--text-main)' }}>Live Ledger Activity</h3>
-          <div className="flex items-center gap-2" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            <span style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%' }} className="animate-pulse"></span>
-            Syncing Live
-          </div>
-        </div>
-
-        {history.length === 0 ? (
-          <div className="flex flex-col items-center justify-center" style={{ padding: '3rem 1rem', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.05)', borderRadius: '1rem', border: '1px dashed rgba(255,255,255,0.2)' }}>
-            <Clock size={40} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-            <p>No recent activity. Send money or add funds to get started.</p>
+        {loading ? (
+          <SkeletonTxList />
+        ) : myHistory.length === 0 ? (
+          <div className="flex flex-col items-center" style={{ padding: '2.5rem 1rem', color: 'var(--text-muted)' }}>
+            <Clock size={34} style={{ opacity: 0.25, marginBottom: '0.75rem' }} />
+            <p style={{ fontSize: '0.9rem' }}>No transactions yet. Send or receive YUG to get started.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
-            {history.map((tx, idx) => {
+          <ul className="flex flex-col" style={{ listStyle: 'none', gap: 0, padding: 0, margin: 0 }}>
+            {myHistory.map((tx, idx) => {
               const isSender = tx.sourceAddress === user?.walletAddress;
-              const isDeposit = tx.type === 'DEPOSIT';
-              const displayType = isDeposit ? 'Deposit Received' : (isSender ? 'Funds Sent' : 'Funds Received');
-              const txColor = isDeposit ? '#10b981' : (isSender ? '#f43f5e' : '#38bdf8');
-              const txBg = isDeposit ? 'rgba(16, 185, 129, 0.1)' : (isSender ? 'rgba(244, 63, 94, 0.1)' : 'rgba(56, 189, 248, 0.1)');
-
+              const label = tx.type === 'DEPOSIT' ? 'Deposit' : (isSender ? 'Sent' : 'Received');
+              const counterparty = isSender
+                ? (tx.destinationUsername ? `@${tx.destinationUsername}` : tx.destinationAddress)
+                : (tx.sourceUsername ? `@${tx.sourceUsername}` : tx.sourceAddress);
+              const color = isSender ? 'var(--danger)' : 'var(--primary)';
+              const Icon = isSender ? ArrowUpRight : ArrowDownRight;
               return (
-                <div
-                  key={tx.transactionId || idx}
-                  className="flex items-center justify-between animate-slide-in"
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Open statement for ${displayType} transaction`}
-                  style={{
-                    padding: '1rem',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '1rem',
-                    transition: 'transform 0.2s',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => openStatement(tx)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      openStatement(tx);
-                    }
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateX(4px)'; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateX(0)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center" style={{ width: '40px', height: '40px', borderRadius: '50%', background: txBg, color: txColor }}>
-                      {isDeposit ? <ArrowDownRight size={20} /> : (isSender ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />)}
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <div className="font-bold" style={{ fontSize: '0.95rem', color: 'var(--text-main)' }}>
-                        {displayType}
+                <li key={tx.transactionId || idx}>
+                  <button
+                    type="button"
+                    onClick={() => openStatement(tx)}
+                    className="flex items-center justify-between w-full"
+                    style={{
+                      padding: '0.85rem 0.5rem',
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: '1px solid var(--border-soft)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      font: 'inherit',
+                      color: 'inherit',
+                      width: '100%',
+                    }}
+                  >
+                    <div className="flex items-center" style={{ gap: '0.9rem' }}>
+                      <div className="flex items-center justify-center" style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--surface-raised)', color }}>
+                        <Icon size={18} />
                       </div>
-                      <div className="flex items-center gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        <span>Ref: {isSender ? (tx.destinationUsername ? `@${tx.destinationUsername}` : tx.destinationAddress?.substring(0,8) + '...') : (tx.sourceUsername ? `@${tx.sourceUsername}` : tx.sourceAddress?.substring(0,8) + '...')}</span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <Clock size={12} /> {new Date(tx.createdAt).toLocaleTimeString()}
+                      <div className="flex flex-col" style={{ gap: 2 }}>
+                        <span className="font-bold" style={{ fontSize: '0.92rem' }}>{label}</span>
+                        <span className="flex items-center" style={{ gap: 6, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          <span style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{counterparty || '—'}</span>
+                          <span>·</span>
+                          <Clock size={11} />
+                          <span>{new Date(tx.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                         </span>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex flex-col items-end gap-1">
-                    <div className="font-extrabold" style={{ fontSize: '1.1rem', color: txColor }}>
-                      {isSender ? '-' : '+'}{tx.amount} YUG
+                    <div className="flex flex-col items-end">
+                      <span className="font-extrabold" style={{ fontSize: '0.98rem', color }}>
+                        {isSender ? '\u2212' : '+'}{money(tx.amount)} YUG
+                      </span>
+                      {isSender && tx.fee > 0 && (
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Fee {money(tx.fee)}</span>
+                      )}
                     </div>
-                    {tx.fee > 0 && isSender && (
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Fee: {tx.fee} YUG
-                      </div>
-                    )}
-                    <button type="button" className="statement-link" onClick={(event) => { event.stopPropagation(); openStatement(tx); }}><ReceiptText size={14} /> Statement</button>
-                  </div>
-                </div>
+                  </button>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
-      </div>
+      </section>
 
-      {statementTransaction && <TransactionStatementModal transaction={statementTransaction} walletAddress={user?.walletAddress} user={user} onClose={closeDashboardOverlay} onRedo={(draft) => { closeDashboardOverlay(); onRedoPayment(draft); }} />}
+      {/* Fixed wallet footer — code / copy / scan switch */}
+      <nav className="wallet-footer" aria-label="Wallet quick actions">
+        <button className="wallet-footer-btn" data-active={footerView === 'qr'} onClick={() => setFooterView(footerView === 'qr' ? null : 'qr')}>
+          <QrCode size={20} /> My Code
+        </button>
+        <button className="wallet-footer-btn" onClick={handleCopy}>
+          {copied ? <Check size={20} color="var(--primary)" /> : <Copy size={20} />} {copied ? 'Copied' : 'Copy ID'}
+        </button>
+        <button className="wallet-footer-btn" data-active={footerView === 'scan'} onClick={() => setFooterView(footerView === 'scan' ? null : 'scan')}>
+          <ScanLine size={20} /> Scan
+        </button>
+      </nav>
 
+      {statementTransaction && (
+        <TransactionStatementModal
+          transaction={statementTransaction}
+          walletAddress={user?.walletAddress}
+          user={user}
+          onClose={() => setStatementTransaction(null)}
+          onRedo={(draft) => { setStatementTransaction(null); onRedoPayment(draft); }}
+        />
+      )}
     </div>
   );
 }

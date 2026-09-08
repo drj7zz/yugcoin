@@ -12,7 +12,7 @@ export default function DepositWithdrawModal({ onClose }) {
       setError('Enter a coupon code to continue.');
       return;
     }
-    setError('Coupon validation is not available yet. Please try again when coupon redemption is released.');
+    setError('Coupon validation is not available yet. Please try again later.');
   };
 
   return (
@@ -34,7 +34,7 @@ export default function DepositWithdrawModal({ onClose }) {
             <input type="text" className="liquid-input" style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }} placeholder="YUG-XXXX-XXXX" value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} required />
           </div>
 
-          <div className="coupon-info"><ShieldCheck size={18} /><span>Your wallet is limited to the YUG balance received when it was created. Self top-ups are disabled. Valid coupon codes will be securely checked by the backend in a future release.</span></div>
+          <div className="coupon-info"><ShieldCheck size={18} /><span>Your wallet is limited to the YUG balance received when it was created. Self top-ups are disabled. Valid coupon codes will be securely checked by the backend before redemption opens.</span></div>
 
           <button type="submit" className="liquid-btn-primary" style={{ padding: '1rem', marginTop: '0.5rem' }}>Validate Coupon</button>
         </form>
