@@ -1,0 +1,118 @@
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const fs = require('fs');
+const { Server } = require('socket.io');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
+require('dotenv').config();
+
+const { connectDB } = require('./config/database');
+const authRoutes = require('./routes/auth.routes');
+const walletRoutes = require('./routes/wallet.routes');
+const adminRoutes = require('./admin/admin.routes');
+const User = require('./models/User');
+const seedData = require('./seed');
+
+const app = express();
+const server = http.createServer(app);
+const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',').map((origin) => origin.trim()).filter(Boolean);
+const corsOrigin = allowedOrigins.includes('*') ? '*' : allowedOrigins;
+
+// Socket.io for Realtime Wallet Notifications
+const io = new Server(server, {
+  cors: {
+    origin: corsOrigin,
+    methods: ['GET', 'POST']
+  }
+});
+
+app.set('io', io);
+
+// Rate limiter for financial endpoints
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 mins
+  max: 300,
+  message: { success: false, error: 'Too many requests, please try again later.' }
+});
+
+// Middleware
+app.use(cors({ origin: corsOrigin }));
+app.use(express.json());
+app.use('/api', apiLimiter);
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/wallet', walletRoutes);
+app.use('/api/admin', adminRoutes);
+
+// The independently built admin UI is served by this backend when available.
+// This keeps the administrator console and its protected API on one deployment.
+const adminBuildPath = path.resolve(__dirname, '../../admin-frontend/build');
+if (fs.existsSync(adminBuildPath)) {
+  app.use('/admin', express.static(adminBuildPath));
+  app.get('/admin/*', (req, res) => res.sendFile(path.join(adminBuildPath, 'index.html')));
+}
+
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ONLINE',
+    service: 'YugCoin Wallet Engine API',
+    health: '/api/health',
+    apiBase: '/api'
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ONLINE',
+    service: 'YugCoin Wallet Engine',
+    timestamp: new Date()
+  });
+});
+
+// Socket Connection handling
+io.on('connection', (socket) => {
+  console.log(`[Socket.io] Client connected: ${socket.id}`);
+
+  socket.on('join_wallet', (walletAddress) => {
+    if (walletAddress) {
+      socket.join(walletAddress);
+      console.log(`[Socket.io] Client ${socket.id} joined room ${walletAddress}`);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`[Socket.io] Client disconnected: ${socket.id}`);
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+
+async function startServer() {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    throw new Error('JWT_SECRET must be set to a random value of at least 32 characters.');
+  }
+  if (process.env.NODE_ENV === 'production' && allowedOrigins.includes('*')) {
+    throw new Error('CORS_ORIGIN must list the trusted frontend URL(s) in production.');
+  }
+  await connectDB();
+  const adminEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  if (adminEmail) {
+    const admin = await User.findOneAndUpdate({ email: adminEmail }, { role: 'ADMIN' }, { new: true });
+    if (admin) console.log(`[Admin] Administrator role verified for ${admin.email}`);
+    else console.warn('[Admin] ADMIN_EMAIL does not match an existing YugCoin account.');
+  }
+  await seedData();
+
+  server.listen(PORT, () => {
+    console.log(`=======================================================`);
+    console.log(`🚀 YugCoin Wallet Engine Backend Server running on port ${PORT}`);
+    console.log(`⚡ Real-time Socket.io active`);
+    console.log(`🔒 Double-Entry Cryptographic Ledger Engine Ready`);
+    console.log(`=======================================================`);
+  });
+}
+
+startServer();
