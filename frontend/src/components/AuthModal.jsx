@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Lock, Mail, User, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, User, Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
 
 export default function AuthModal({ initialMode = 'login', onClose, onSuccess, onModeSwitch }) {
@@ -127,19 +127,16 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess, o
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <div className="flex justify-between items-center" style={{ marginBottom: '1rem' }}>
-          <h3 className="font-extrabold" style={{ fontSize: '1.5rem', color: 'var(--text-main)' }}>
-            {mode === 'login' ? 'Access Wallet' : 'Create Wallet'}
-          </h3>
-          <button
-            onClick={onClose}
-            className="flex items-center justify-center"
-            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', padding: '0.5rem', borderRadius: '50%', color: 'var(--text-muted)', cursor: 'pointer', transition: 'background 0.2s' }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-          >
-            <X size={20} />
-          </button>
+        <div className="flex flex-col items-center" style={{ gap: '0.35rem', marginBottom: '0.25rem' }}>
+          <span className="hero-wordmark" style={{ fontSize: '1.6rem' }}>YugCoin</span>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+            {mode === 'login' ? 'Sign in to access your wallet' : 'Create your wallet in seconds'}
+          </p>
+        </div>
+
+        <div className="auth-switch" role="tablist" aria-label="Authentication mode">
+          <button type="button" data-active={mode === 'login'} onClick={() => switchMode('login')} role="tab">Sign In</button>
+          <button type="button" data-active={mode === 'register'} onClick={() => switchMode('register')} role="tab">Create Wallet</button>
         </div>
 
         {error && (
@@ -286,16 +283,10 @@ export default function AuthModal({ initialMode = 'login', onClose, onSuccess, o
           <p className="google-config-notice">Google sign-in will be available after <code>REACT_APP_GOOGLE_CLIENT_ID</code> is configured.</p>
         )}
 
-        <div className="flex justify-between items-center" style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-          <span>
-            {mode === 'login' ? "New to Yugcoin?" : "Already have a wallet?"}
+        <div className="flex justify-between items-center">
+          <span style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+            {mode === 'login' ? 'One wallet, everything in it.' : 'Free forever. No fees.'}
           </span>
-          <button
-            onClick={switchMode}
-            style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 700 }}
-          >
-            {mode === 'login' ? 'Create Wallet' : 'Sign In'}
-          </button>
         </div>
       </div>
     </div>

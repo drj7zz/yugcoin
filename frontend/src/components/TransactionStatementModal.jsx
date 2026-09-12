@@ -59,22 +59,40 @@ export default function TransactionStatementModal({ transaction, walletAddress, 
     <div className="modal-overlay statement-overlay" role="dialog" aria-modal="true" aria-labelledby="statement-title">
       <div className="modal-content statement-modal">
         <div className="flex justify-between items-center gap-4">
-          <div className="flex items-center gap-3"><div className="statement-icon"><ReceiptText size={19} /></div><div><h3 id="statement-title" className="font-extrabold" style={{ fontSize: '1.25rem' }}>Payment Receipt</h3><span className="statement-id">Ref {transaction.transactionId}</span></div></div>
+          <div className="flex items-center gap-3">
+            <div className="statement-icon"><ReceiptText size={19} /></div>
+            <div>
+              <h3 id="statement-title" className="font-extrabold" style={{ fontSize: '1.2rem' }}>{direction}</h3>
+              <span className="statement-id">Ref {transaction.transactionId}</span>
+            </div>
+          </div>
           <button type="button" className="scanner-close" onClick={onClose} aria-label="Close receipt"><X size={17} /></button>
         </div>
-        <div className="statement-amount" data-negative={outgoing}><span>{direction}</span><strong>{outgoing ? '\u2212' : '+'}{money(transaction.amount)} {currency}</strong></div>
-        <div className="statement-status"><CheckCircle2 size={18} /> {transaction.status || 'COMPLETED'}</div>
+
+        <div className="statement-summary">
+          <div className="statement-amount" data-negative={outgoing} style={{ border: 'none', background: 'transparent', padding: 0 }}>
+            <strong style={{ fontSize: '2.2rem', color: outgoing ? 'var(--danger)' : 'var(--primary)' }}>
+              {outgoing ? '\u2212' : '+'}{money(transaction.amount)} {currency}
+            </strong>
+            <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>{direction}</span>
+          </div>
+          <div className="statement-status"><CheckCircle2 size={18} /> {transaction.status || 'COMPLETED'}</div>
+        </div>
+
         <dl className="statement-details">
           <div><dt>{outgoing ? 'To' : (hasCounterparty ? 'From' : 'Credited to')}</dt><dd>{counterpartyDisplay || (walletAddress || '—')}</dd></div>
           {counterpartyName && <div><dt>Name</dt><dd>{counterpartyName}</dd></div>}
           <div><dt>Date & time</dt><dd>{dateTime(transaction.createdAt)}</dd></div>
           <div><dt>Amount</dt><dd>{money(transaction.amount)} {currency}</dd></div>
-          {Number(transaction.fee) > 0 && <div><dt>Fee</dt><dd>{money(transaction.fee)} {currency}</dd></div>}
-          {Number(transaction.fee) > 0 && <div className="statement-total"><dt>Total</dt><dd>{money(Number(transaction.amount || 0) + Number(transaction.fee || 0))} {currency}</dd></div>}
+          <div><dt>Fee</dt><dd>{Number(transaction.fee) > 0 ? `${money(transaction.fee)} ${currency}` : 'Free'}</dd></div>
+          <div className="statement-total"><dt>Total</dt><dd>{money(Number(transaction.amount || 0) + Number(transaction.fee || 0))} {currency}</dd></div>
           {transaction.description && <div><dt>Reference</dt><dd>{transaction.description}</dd></div>}
         </dl>
-        <button type="button" className="liquid-btn-primary flex items-center justify-center gap-2" onClick={downloadStatement} style={{ padding: '0.9rem' }}><Download size={18} /> Download receipt</button>
-        {outgoing && onRedo && <button type="button" className="liquid-btn-secondary flex items-center justify-center gap-2" onClick={() => onRedo({ destinationAddress: counterpartyUsername ? `@${counterpartyUsername}` : counterparty, amount: String(transaction.amount), description: transaction.description || '' })} style={{ padding: '0.8rem' }}><RotateCcw size={17} /> Send again</button>}
+
+        <div className="statement-actions">
+          <button type="button" className="liquid-btn-primary flex items-center justify-center gap-2" onClick={downloadStatement} style={{ padding: '0.9rem', flex: 1 }}><Download size={18} /> Download receipt</button>
+          {outgoing && onRedo && <button type="button" className="liquid-btn-secondary flex items-center justify-center gap-2" onClick={() => onRedo({ destinationAddress: counterpartyUsername ? `@${counterpartyUsername}` : counterparty, amount: String(transaction.amount), description: transaction.description || '' })} style={{ padding: '0.8rem', flex: 1 }}><RotateCcw size={17} /> Send again</button>}
+        </div>
       </div>
     </div>
   );

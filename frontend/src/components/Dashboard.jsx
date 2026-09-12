@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { Send, Ticket, Copy, Check, ArrowDownRight, ArrowUpRight, Clock, QrCode, ScanLine, Download, X, Eye, EyeOff } from 'lucide-react';
+import { Send, Ticket, Copy, Check, ArrowDownRight, ArrowUpRight, Clock, QrCode, ScanLine, Download, X, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import WalletQrScanner from './WalletQrScanner';
 import TransactionStatementModal from './TransactionStatementModal';
 import { money } from '../utils/format';
 import { SkeletonBalance, SkeletonTxList } from './Skeleton';
 
-export default function Dashboard({ user, wallets, history, loading, onOpenSend, onOpenCoupon, onScanRecipient, onRedoPayment }) {
+export default function Dashboard({ user, wallets, history, loading, onOpenSend, onOpenCoupon, onScanRecipient, onRedoPayment, onRefresh }) {
   const [copied, setCopied] = useState(false);
   const [footerView, setFooterView] = useState(null); // null | 'qr' | 'scan'
   const [statementTransaction, setStatementTransaction] = useState(null);
   const [hideBalance, setHideBalance] = useState(false);
+  const [typeFilter, setTypeFilter] = useState('all');    // all | sent | received | deposit
+  const [dateFilter, setDateFilter] = useState('all');    // all | 7d | 30d
 
   const closeFooter = () => setFooterView(null);
   const openStatement = (tx) => setStatementTransaction(tx);
@@ -59,6 +61,17 @@ export default function Dashboard({ user, wallets, history, loading, onOpenSend,
     tx.sourceAddress === user?.walletAddress || tx.destinationAddress === user?.walletAddress
   );
 
+  // Statement filters: type + date range
+  const now = Date.now();
+  const rangeStart = dateFilter === '7d' ? now - 7 * 864e5 : dateFilter === '30d' ? now - 30 * 864e5 : 0;
+  const filteredHistory = myHistory.filter(tx => {
+    if (rangeStart && new Date(tx.createdAt).getTime() < rangeStart) return false;
+    if (typeFilter === 'sent') return tx.sourceAddress === user?.walletAddress && tx.type !== 'DEPOSIT' && tx.type !== 'SYSTEM_INITIALIZATION';
+    if (typeFilter === 'deposit') return tx.type === 'DEPOSIT' || tx.type === 'SYSTEM_INITIALIZATION';
+    if (typeFilter === 'received') return tx.sourceAddress !== user?.walletAddress && tx.type !== 'DEPOSIT' && tx.type !== 'SYSTEM_INITIALIZATION';
+    return true;
+  });
+
   const handleCopy = () => {
     if (user?.walletAddress) {
       navigator.clipboard.writeText(receiveIdentifier);
@@ -76,14 +89,24 @@ export default function Dashboard({ user, wallets, history, loading, onOpenSend,
           <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             Available balance
           </span>
-          <button
-            type="button"
-            onClick={() => setHideBalance(v => !v)}
-            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}
-            title={hideBalance ? 'Show balance' : 'Hide balance'}
-          >
-            {hideBalance ? <EyeOff size={16} /> : <Eye size={16} />}
-          </button>
+          <div className="flex items-center" style={{ gap: '0.25rem' }}>
+            <button
+              type="button"
+              onClick={onRefresh}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}
+              title="Refresh balance"
+            >
+              <RefreshCw size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setHideBalance(v => !v)}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem' }}
+              title={hideBalance ? 'Show balance' : 'Hide balance'}
+            >
+              {hideBalance ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
         </div>
         {loading ? (
           <div style={{ marginTop: '0.75rem' }}><SkeletonBalance /></div>
@@ -160,20 +183,34 @@ export default function Dashboard({ user, wallets, history, loading, onOpenSend,
 
       <hr className="section-divider" style={{ marginTop: '2rem' }} />
 
-      {/* Activity — own transactions only */}
+      {/* Activity — own transactions only, with statement filters */}
       <section className="flat-section">
-        <h3 className="font-bold" style={{ fontSize: '1.05rem', marginBottom: '1.1rem' }}>Activity</h3>
+        <div className="flex justify-between items-center" style={{ flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.1rem' }}>
+          <h3 className="font-bold" style={{ fontSize: '1.05rem' }}>Activity</h3>
+          <div className="activity-filters">
+            <div className="activity-filter-group" role="group" aria-label="Filter by type">
+              {[['all', 'All'], ['sent', 'Sent'], ['received', 'Received'], ['deposit', 'Deposits']].map(([value, label]) => (
+                <button key={value} type="button" data-active={typeFilter === value} onClick={() => setTypeFilter(value)}>{label}</button>
+              ))}
+            </div>
+            <div className="activity-filter-group" role="group" aria-label="Filter by date">
+              {[['all', 'Any time'], ['7d', '7 days'], ['30d', '30 days']].map(([value, label]) => (
+                <button key={value} type="button" data-active={dateFilter === value} onClick={() => setDateFilter(value)}>{label}</button>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {loading ? (
           <SkeletonTxList />
-        ) : myHistory.length === 0 ? (
+        ) : filteredHistory.length === 0 ? (
           <div className="flex flex-col items-center" style={{ padding: '2.5rem 1rem', color: 'var(--text-muted)' }}>
             <Clock size={34} style={{ opacity: 0.25, marginBottom: '0.75rem' }} />
-            <p style={{ fontSize: '0.9rem' }}>No transactions yet. Send or receive YUG to get started.</p>
+            <p style={{ fontSize: '0.9rem' }}>{myHistory.length === 0 ? 'No transactions yet. Send or receive YUG to get started.' : 'No transactions match these filters.'}</p>
           </div>
         ) : (
           <ul className="flex flex-col" style={{ listStyle: 'none', gap: 0, padding: 0, margin: 0 }}>
-            {myHistory.map((tx, idx) => {
+            {filteredHistory.map((tx, idx) => {
               const isSender = tx.sourceAddress === user?.walletAddress;
               const label = tx.type === 'DEPOSIT' ? 'Deposit' : (isSender ? 'Sent' : 'Received');
               const counterparty = isSender

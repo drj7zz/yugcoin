@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from
 import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
 import AuthModal from './components/AuthModal';
-import logo from './assets/logo.webp';
+import InfoView from './components/InfoView';
 import TransferModal from './components/TransferModal';
 import DepositWithdrawModal from './components/DepositWithdrawModal';
 import TransactionStatementModal from './components/TransactionStatementModal';
@@ -156,6 +156,7 @@ function AppShell() {
         ) : !user ? (
           <>
             <Route path="/" element={<LandingPage onOpenAuth={openAuth} />} />
+            <Route path="/info/:topic" element={<InfoView topic={location.pathname.split('/')[2]} />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </>
         ) : (
@@ -168,6 +169,7 @@ function AppShell() {
                 history={history}
                 onOpenSend={openSend}
                 onOpenCoupon={openCoupon}
+                onRefresh={loadUserData}
                 onNavigateProfile={() => navigateTab('profile')}
                 onScanRecipient={(address) => {
                   setTransferDraft({ destinationAddress: address, amount: '', description: '' });
@@ -179,7 +181,8 @@ function AppShell() {
                 }}
               />
             } />
-            <Route path="/profile" element={<ProfileView user={user} />} />
+            <Route path="/profile" element={<ProfileView user={user} onLogout={handleLogout} />} />
+            <Route path="/info/:topic" element={<InfoView topic={location.pathname.split('/')[2]} />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </>
         )}
@@ -247,11 +250,6 @@ function LandingPage({ onOpenAuth }) {
     <div className="flex flex-col items-center justify-center" style={{ minHeight: 'calc(100vh - 9rem)' }}>
       <div className="landing-hero-content animate-slide-in w-full">
         <div className="flex flex-col items-center gap-4">
-          <img
-            src={logo}
-            alt="YugCoin logo"
-            className="logo-transparent landing-hero-logo"
-          />
           <h1 className="hero-title" style={{ fontSize: '3.2rem', lineHeight: 1.12 }}>
             Money, made simple.
           </h1>
@@ -261,28 +259,19 @@ function LandingPage({ onOpenAuth }) {
         </div>
 
         <div className="landing-cta mt-8">
-          <button className="liquid-btn-primary" onClick={() => onOpenAuth('register')}>Create Wallet</button>
-          <button className="liquid-btn-secondary" onClick={() => onOpenAuth('login')}>Sign In</button>
+          <button className="liquid-btn-primary" onClick={() => onOpenAuth('login')}>Open Your Wallet</button>
         </div>
 
         <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '2.5rem' }}>
-          Free to use · Google sign-in
+          Free to use · Google sign-in · Learning project — YUG is not a real currency
         </p>
       </div>
     </div>
   );
 }
 
-const FOOTER_LINKS = [
-  { id: 'about', label: 'About' },
-  { id: 'contribute', label: 'Contribute' },
-  { id: 'privacy', label: 'Privacy' },
-  { id: 'help', label: 'Help' },
-];
-
 function AuthPage({ mode, onSuccess }) {
   const navigate = useNavigate();
-  const [info, setInfo] = useState(null);
 
   return (
     <div className="auth-page">
@@ -296,33 +285,6 @@ function AuthPage({ mode, onSuccess }) {
         }}
         onModeSwitch={(nextMode) => navigate(nextMode === 'login' ? '/login' : '/register')}
       />
-
-      {/* Flat footer links — same chrome as every other page */}
-      <footer className="auth-flat-footer">
-        {FOOTER_LINKS.map(link => (
-          <button key={link.id} type="button" className="auth-flat-link" onClick={() => setInfo(link.id)}>
-            {link.label}
-          </button>
-        ))}
-        <span className="auth-flat-note">YugCoin © {new Date().getFullYear()}</span>
-      </footer>
-
-      {info && (
-        <div className="auth-info-overlay" onClick={() => setInfo(null)} role="presentation">
-          <div className="auth-info-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-            <div className="flex items-center justify-between" style={{ marginBottom: '0.75rem' }}>
-              <h3 className="font-bold" style={{ fontSize: '1.05rem' }}>
-                {FOOTER_LINKS.find(l => l.id === info)?.label}
-              </h3>
-              <button type="button" onClick={() => setInfo(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }} aria-label="Close">✕</button>
-            </div>
-            {info === 'about' && <p className="auth-info-body">YugCoin is a digital wallet for sending, receiving and tracking YUG — every payment gets a receipt, every balance stays yours. No noise, just your money.</p>}
-            {info === 'contribute' && <p className="auth-info-body">YugCoin is built in the open. Clone the repo, pick an issue, and open a pull request — bug fixes, UI polish and wallet features are all welcome.</p>}
-            {info === 'privacy' && <p className="auth-info-body">Your wallet data stays yours: balances and transactions are visible only to your account, and sign-in sessions are stored on your device.</p>}
-            {info === 'help' && <p className="auth-info-body">New here? Create a wallet, hit “Redeem” for a coupon top-up, then Send or scan a friend's QR to pay them in seconds.</p>}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,11 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LayoutDashboard, UserRound, LogOut, RefreshCw, ChevronDown } from 'lucide-react';
+import { LogOut, RefreshCw, ChevronDown, UserRound } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.webp';
-
-const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Wallet', icon: LayoutDashboard },
-  { id: 'profile', label: 'Profile', icon: UserRound },
-];
 
 function BrandMark() {
   return (
@@ -15,17 +11,8 @@ function BrandMark() {
   );
 }
 
-function TabButton({ item, activeTab, setActiveTab }) {
-  const Icon = item.icon;
-  return (
-    <button className="navbar-tab" data-active={activeTab === item.id} onClick={() => setActiveTab(item.id)}>
-      <Icon size={17} />
-      <span>{item.label}</span>
-    </button>
-  );
-}
-
 export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLogout, onRefresh }) {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -45,12 +32,6 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
         <div className="navbar-content">
           {user ? (
             <>
-              <div className="navbar-tabs">
-                {NAV_ITEMS.map(item => (
-                  <TabButton key={item.id} item={item} activeTab={activeTab} setActiveTab={setActiveTab} />
-                ))}
-              </div>
-
               <div className="navbar-actions" style={{ gap: '0.6rem' }}>
                 <button
                   onClick={onRefresh}
@@ -100,10 +81,15 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
             </>
           ) : (
             <div className="navbar-guest-actions navbar-guest-flat" style={{ gap: '0.6rem' }}>
-              <button className="navbar-flat-link" onClick={() => onOpenAuth('login')} style={{ fontSize: '0.88rem' }}>
-                Sign In
+              <button className="navbar-flat-link" onClick={() => navigate('/')} style={{ fontSize: '0.88rem', fontWeight: 700 }}>
+                Home
               </button>
-              <button className="navbar-flat-link navbar-flat-link-strong" onClick={() => onOpenAuth('register')} style={{ fontSize: '0.88rem' }}>
+              {['about', 'contribute', 'privacy', 'help'].map(id => (
+                <button key={id} className="navbar-flat-link" onClick={() => navigate(`/info/${id}`)} style={{ fontSize: '0.88rem' }}>
+                  {id.charAt(0).toUpperCase() + id.slice(1)}
+                </button>
+              ))}
+              <button className="navbar-flat-link navbar-flat-link-strong" onClick={() => onOpenAuth('login')} style={{ fontSize: '0.88rem', fontWeight: 800 }}>
                 Open Wallet
               </button>
             </div>
