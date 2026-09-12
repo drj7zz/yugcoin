@@ -484,26 +484,13 @@ body {
 
 @media (max-width: 768px) {
   .navbar-tabs { display: none; }
-  .bottom-nav {
-    position: fixed;
-    left: 0; right: 0; bottom: 0;
+  /* Single merged footer: wallet + QR actions (no separate bottom tab bar) */
+  .max-w-container { padding-bottom: 5.5rem; }
+  .wallet-footer {
+    bottom: 0;
+    margin-bottom: calc(0.6rem + env(safe-area-inset-bottom));
     z-index: 90;
-    display: flex;
-    justify-content: space-around;
-    padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
-    background: var(--surface);
-    border-top: 1px solid var(--border-soft);
   }
-  .bottom-nav .navbar-tab {
-    flex: 1;
-    flex-direction: column;
-    gap: 0.2rem;
-    font-size: 0.68rem;
-    padding: 0.35rem 0.25rem;
-  }
-  .bottom-nav .navbar-tab::after { display: none; }
-  .max-w-container { padding-bottom: 6.5rem; }
-  .wallet-footer { bottom: 4.6rem; }
 }
 
 .navbar-content,

@@ -110,15 +110,6 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
           )}
         </div>
       </nav>
-
-      {/* Mobile bottom navigation */}
-      {user && (
-        <nav className="bottom-nav">
-          {NAV_ITEMS.map(item => (
-            <TabButton key={item.id} item={item} activeTab={activeTab} setActiveTab={setActiveTab} />
-          ))}
-        </nav>
-      )}
     </>
   );
 }
