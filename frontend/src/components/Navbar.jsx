@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LogOut, RefreshCw, ChevronDown, UserRound } from 'lucide-react';
+import { LogOut, RefreshCw, ChevronDown, UserRound, Menu, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.webp';
 
@@ -14,6 +14,7 @@ function BrandMark() {
 export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLogout, onRefresh }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -21,6 +22,14 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
   }, []);
+
+  // Close the mobile menu when leaving guest view (login) or on resize to desktop
+  useEffect(() => {
+    const close = () => { if (window.innerWidth > 768) setMobileMenuOpen(false); };
+    window.addEventListener('resize', close);
+    return () => window.removeEventListener('resize', close);
+  }, []);
+  useEffect(() => { if (user) setMobileMenuOpen(false); }, [user]);
 
   const initial = (user?.name || 'U').charAt(0).toUpperCase();
 
@@ -80,18 +89,48 @@ export default function Navbar({ user, activeTab, setActiveTab, onOpenAuth, onLo
               </div>
             </>
           ) : (
-            <div className="navbar-guest-actions navbar-guest-flat" style={{ gap: '0.6rem' }}>
-              <button className="navbar-flat-link" onClick={() => navigate('/')} style={{ fontSize: '0.88rem', fontWeight: 700 }}>
-                Home
-              </button>
-              {['about', 'contribute', 'privacy', 'help'].map(id => (
-                <button key={id} className="navbar-flat-link" onClick={() => navigate(`/info/${id}`)} style={{ fontSize: '0.88rem' }}>
-                  {id.charAt(0).toUpperCase() + id.slice(1)}
+            <div className="navbar-guest-wrap">
+              {/* Flat links — desktop only */}
+              <div className="navbar-guest-actions navbar-guest-flat" style={{ gap: '0.6rem' }}>
+                <button className="navbar-flat-link" onClick={() => navigate('/')} style={{ fontSize: '0.88rem', fontWeight: 700 }}>
+                  Home
                 </button>
-              ))}
-              <button className="navbar-flat-link navbar-flat-link-strong" onClick={() => onOpenAuth('login')} style={{ fontSize: '0.88rem', fontWeight: 800 }}>
-                Open Wallet
+                {['about', 'contribute', 'privacy', 'help'].map(id => (
+                  <button key={id} className="navbar-flat-link" onClick={() => navigate(`/info/${id}`)} style={{ fontSize: '0.88rem' }}>
+                    {id.charAt(0).toUpperCase() + id.slice(1)}
+                  </button>
+                ))}
+                <button className="navbar-flat-link navbar-flat-link-strong" onClick={() => onOpenAuth('login')} style={{ fontSize: '0.88rem', fontWeight: 800 }}>
+                  Open Wallet
+                </button>
+              </div>
+
+              {/* Hamburger — mobile only */}
+              <button
+                type="button"
+                className="navbar-hamburger"
+                aria-label="Open menu"
+                aria-expanded={mobileMenuOpen}
+                onClick={() => setMobileMenuOpen(o => !o)}
+              >
+                {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
+
+              {mobileMenuOpen && (
+                <div className="navbar-mobile-menu glass-card animate-slide-in" role="menu">
+                  <button className="navbar-mobile-item" onClick={() => { setMobileMenuOpen(false); navigate('/'); }}>
+                    Home
+                  </button>
+                  {['about', 'contribute', 'privacy', 'help'].map(id => (
+                    <button key={id} className="navbar-mobile-item" onClick={() => { setMobileMenuOpen(false); navigate(`/info/${id}`); }}>
+                      {id.charAt(0).toUpperCase() + id.slice(1)}
+                    </button>
+                  ))}
+                  <button className="navbar-mobile-item navbar-mobile-item-cta" onClick={() => { setMobileMenuOpen(false); onOpenAuth('login'); }}>
+                    Open Wallet
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
